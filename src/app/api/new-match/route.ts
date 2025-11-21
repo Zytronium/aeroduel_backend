@@ -60,8 +60,8 @@ export async function POST(req: Request) {
   }
 
   // Set server URL and WebSocket URL
-  const port: string | number = process.env.PORT || 3000; // todo: find unused port?
-  const serverUrl = `http://${localIp}:${port}`;
+  const port: string | number = process.env.PORT || 45045; // Port 45045 because it has an extremely low chance of being used by other apps
+  const serverUrl = `http://${localIp}:${port}`;           // If you change the port, a port in range 45000–48000 is recommended.
   const wsUrl = `ws://${localIp}:${port}`;
 
   // Create new match

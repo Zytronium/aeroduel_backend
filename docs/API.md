@@ -16,8 +16,8 @@
 
 The Aeroduel Server API handles match creation, plane registration, game state management, and real-time communication between ESP32s and mobile apps.
 
-**Base URL:** `http://<local-ip>:3000`  
-**WebSocket URL:** `ws://<local-ip>:3000`
+**Base URL:** `http://<local-ip>:45045`  
+**WebSocket URL:** `ws://<local-ip>:45045`
 
 ---
 
@@ -56,9 +56,9 @@ Creates a new Aeroduel match in "waiting" state.
     "matchType": "timed",
     "duration": 420,
     "maxPlayers": 2,
-    "serverUrl": "http://192.168.1.5:3000",
-    "wsUrl": "ws://192.168.1.5:3000",
-    "qrCodeData": "aeroduel://join?ip=192.168.1.5&port=3000&pin=123456",
+    "serverUrl": "http://192.168.1.5:45045",
+    "wsUrl": "ws://192.168.1.5:45045",
+    "qrCodeData": "aeroduel://join?ip=192.168.1.5&port=45045&pin=123456",
     "registeredPlanes": []
   }
 }
@@ -108,7 +108,7 @@ Creates a new Aeroduel match in "waiting" state.
 
 **Example:**
 ```bash
-curl -X POST http://192.168.1.5:3000/api/new-match \
+curl -X POST http://192.168.1.5:45045/api/new-match \
   -H "Content-Type: application/json" \
   -d '{"duration": 300, "maxPlayers": 3}'
 ```
@@ -197,7 +197,7 @@ Real-time communication for match updates.
 
 **Connection:**
 ```javascript
-const ws = new WebSocket('ws://192.168.1.5:3000');
+const ws = new WebSocket('ws://192.168.1.5:45045');
 ```
 
 **Events:**
@@ -310,7 +310,7 @@ Common HTTP status codes:
 - **Desktop Server** and **Mobile Apps** must be on the same WiFi network. This can be a mobile hotspot, so there's no need to bring a WiFi router to the airfield.
 - **ESP32s** must be on the same WiFi network
 - Server auto-detects local IP address
-- Default port: `3000` (configurable via `PORT` env variable)
+- Default port: `45045` (configurable via `PORT` env variable)
 
 ---
 
