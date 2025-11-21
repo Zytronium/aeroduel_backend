@@ -56,3 +56,18 @@ The server then updates the score and sends web socket updates to all connected 
 
 ### Mobile Integration
 WebSocket implementation for phone controllers.
+
+---
+
+## Next steps
+
+- Add endpoint for joining a match
+- Add endpoint for starting a match
+- Add endpoint for ending a match (?)
+- Make the front-end create a new match on click of the button via API call
+- Make the front-end display a game pin and generate a QR code for the match
+- Create a WebSocket server
+- Consider protecting the API endpoints with authentication
+- Add CI/CD
+- Add unittesting
+- 
