@@ -28,12 +28,16 @@ Note: So far only tested on Linux (Fedora and Zorin OS)
 Use Next.js and React to build a basic desktop UI with a single button to start a match on the local network. 
 
 ## In Progress
-none
+
+### Local Server Hosting
+Next.js API triggered from a single click in the frontend.
+
+### Database Integration
+~~MongoDB/PostgreSQL or local database for match state~~. Store game state in memory. Include API endpoints to 
+read data but do not allow clients to write, not even when joining matches (the server will handle that if the 
+endpoint for joining a match does not fail).
 
 ## Todo
-
-### Local Server Hosting (next priority)
-Next.js API triggered from a single click in the frontend.
 
 ### RC Plane Registration/Linking
 Users will be able to register their plane with the mobile app. The mobile app will assign a unique ID to that plane and 
@@ -48,7 +52,3 @@ The server then updates the score and sends web socket updates to all connected 
 
 ### Mobile Integration
 WebSocket implementation for phone controllers.
-
-### Database Integration
-MongoDB/PostgreSQL or local database for match state. Include API endpoints to read data but do not allow clients to 
-write, not even when joining matches (the server will handle that if the endpoint for joining a match does not fail).
