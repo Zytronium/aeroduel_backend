@@ -1,26 +1,19 @@
 // Note: requires `bonjour-service` in packaged app/environment.
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports
 const { app, BrowserWindow } = require("electron");
-// eslint-disable-next-line @typescript-eslint/no-require-imports
 const path = require("path");
-// eslint-disable-next-line @typescript-eslint/no-require-imports
 const { spawn } = require("child_process");
-// eslint-disable-next-line @typescript-eslint/no-require-imports
 const net = require("net");
-// eslint-disable-next-line @typescript-eslint/no-require-imports
 const fs = require("fs");
-// eslint-disable-next-line @typescript-eslint/no-require-imports
 const os = require("os");
+
 // Load bonjour-service, but be resilient to packaging / alternate package
 let BonjourModule = null;
 try {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
   BonjourModule = require("bonjour-service");
 } catch (e1) {
   // fallback to 'bonjour' if bonjour-service not present at runtime
   try {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
     BonjourModule = require("bonjour");
   } catch (e2) {
     BonjourModule = null;
