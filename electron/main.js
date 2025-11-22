@@ -29,7 +29,8 @@ function getLocalIp() {
   const ifs = os.networkInterfaces();
   for (const name of Object.keys(ifs)) {
     for (const iface of ifs[name]) {
-      if (iface.family === "IPv4" && !iface.internal) {
+      // Must be IPv4, not internal, and not link-local
+      if (iface.family === "IPv4" && !iface.internal && !iface.address.startsWith("169.254.")) {
         return iface.address;
       }
     }
@@ -85,22 +86,36 @@ async function createWindow() {
     return;
   }
 
-  // Spawn Next.js standalone server bound to all interfaces so it's reachable from LAN.
+  const localIp = getLocalIp();
+  console.log("Detected local IPv4:", localIp || "none");
+
+  // Spawn Next.js standalone server bound to 0.0.0.0 (all interfaces)
   serverProcess = spawn(runtimeNode, [serverPath], {
     cwd: path.dirname(serverPath),
-    env: { 
-      ...process.env, 
+    env: {
+      ...process.env,
       PORT: String(port),
-      HOST: "0.0.0.0",
+      HOSTNAME: "0.0.0.0", // Next.js standalone uses HOSTNAME not HOST
       // Ensure Electron binary behaves like Node when executing the script in prod
       ...(!isDev && { ELECTRON_RUN_AS_NODE: "1" })
     },
     stdio: "pipe"
   });
 
+  let detectedHost = null;
+
   serverProcess.stdout.on("data", (d) => {
-    console.log("[server stdout]", d.toString());
+    const output = d.toString();
+    console.log("[server stdout]", output);
+
+    // Try to extract host from Next.js output: "- Local: http://HOST:PORT"
+    const match = output.match(/Local:\s+https?:\/\/([^/:]+)(?::\d+)?/i);
+    if (match && match[1] && !detectedHost) {
+      detectedHost = match[1];
+      console.log("Detected server host:", detectedHost);
+    }
   });
+
   serverProcess.stderr.on("data", (d) => {
     console.error("[server stderr]", d.toString());
   });
@@ -124,183 +139,72 @@ async function createWindow() {
     if (win) win.loadURL("data:text/html,<h1>Server exited!</h1>");
   });
 
-  // Wait a bit for server to accept connections on loopback and local IP, then load URL and publish mDNS.
-// Wait a bit for server to accept connections on loopback and local IP, then load URL and publish mDNS.
-  const waitForServer = async () => {
-    const maxRetries = 40;
-    let retries = 0;
-    const delay = (ms) => new Promise(r => setTimeout(r, ms));
-    const localIp = getLocalIp();
+  // Wait for server to print its host, then load
+  setTimeout(() => {
+    const hostToUse = detectedHost || localIp || "127.0.0.1";
+    console.log("Loading app URL: http://" + hostToUse + ":" + port);
+    win.loadURL(`http://${hostToUse}:${port}`);
 
-    // Try to extract the host from server stdout (Next prints "Local: http://<host>:<port>" and "Network: ...")
-    let stdoutHost = null;
-    const stdoutBuf = [];
-    const stdoutListener = (d) => {
-      try {
-        const s = d.toString();
-        stdoutBuf.push(s);
-        // Try to match `Local:         http://<host>:<port>` or `- Local:         http://<host>:<port>`
-        const m = s.match(/Local:\s+https?:\/\/([^/:]+)(?::\d+)?/i) || s.match(/Local:\s+http:\/\/([^/:]+)(?::\d+)?/i);
-        if (m && m[1]) stdoutHost = m[1];
-        // Also check for Network line if Local not present
-        const n = s.match(/Network:\s+https?:\/\/([^/:]+)(?::\d+)?/i) || s.match(/Network:\s+http:\/\/([^/:]+)(?::\d+)?/i);
-        if (!stdoutHost && n && n[1]) stdoutHost = n[1];
-      } catch (e) {
-        // ignore parse errors
-      }
-    };
+    // Publish mDNS after loading
+    publishMDNS(localIp, port, isDev);
+  }, 2000);
+}
 
-    serverProcess.stdout.on("data", stdoutListener);
+function publishMDNS(localIp, port, isDev) {
+  if (!localIp) {
+    console.warn("No valid local IPv4 found. mDNS will not be published.");
+    return;
+  }
 
-    // Hosts to prefer probing (loopback first, then local IP if present)
-    const hostsToTry = ["127.0.0.1"];
-    if (localIp && localIp !== "127.0.0.1") hostsToTry.push(localIp);
+  if (!BonjourModule) {
+    console.warn("No mDNS library available. mDNS will not be published.");
+    return;
+  }
 
-    // Attempt network probes until a host responds or stdout yields a host
-    let successfulHost = null;
-    while (retries < maxRetries && !successfulHost) {
-      // If stdout exposed a host (Next is ready), prefer it
-      if (stdoutHost) {
-        // If stdoutHost is the machine name (e.g. "fedora"), try resolving it to an IP by probing directly
-        try {
-          await new Promise((resolve, reject) => {
-            const client = net.createConnection({ port, host: stdoutHost, timeout: 500 }, () => {
-              client.end();
-              resolve();
-            });
-            client.on("error", reject);
-            client.on("timeout", () => {
-              client.destroy();
-              reject(new Error("timeout"));
-            });
-          });
-          successfulHost = stdoutHost;
-          break;
-        } catch {
-          // stdoutHost didn't respond directly; continue probing other hosts
-        }
-      }
-
-      // Probe hostsToTry sequentially
-      for (const host of hostsToTry) {
-        try {
-          await new Promise((resolve, reject) => {
-            const client = net.createConnection({ port, host, timeout: 500 }, () => {
-              client.end();
-              resolve();
-            });
-            client.on("error", reject);
-            client.on("timeout", () => {
-              client.destroy();
-              reject(new Error("timeout"));
-            });
-          });
-          successfulHost = host;
-          break;
-        } catch (_) {
-          // try next host
-        }
-      }
-
-      if (!successfulHost) {
-        await delay(250);
-        retries++;
-      }
+  try {
+    // Instantiate bonjour
+    if (typeof BonjourModule === "function") {
+      try { bonjour = new BonjourModule(); } catch (e) { bonjour = BonjourModule(); }
+    } else if (BonjourModule && typeof BonjourModule.default === "function") {
+      try { bonjour = new BonjourModule.default(); } catch (e) { bonjour = BonjourModule.default(); }
+    } else {
+      bonjour = BonjourModule();
     }
 
-    // Clean up stdout listener
-    try { serverProcess.stdout.removeListener("data", stdoutListener); } catch (e) {}
+    if (!bonjour || typeof bonjour.publish !== "function") {
+      console.error("bonjour instance does not support publish()");
+      return;
+    }
 
-    // If nothing responded, but stdoutHost exists, load it anyway (useful when numeric IP probing fails)
-    const hostToLoad = successfulHost || stdoutHost || "127.0.0.1";
-    console.log("Loading app URL: http://" + hostToLoad + ":" + port);
-    win.loadURL(`http://${hostToLoad}:${port}`);
-
-// Publish mDNS service so devices can resolve aeroduel.local -> this host:port
+    // Publish custom AeroDuel service
     try {
-      const publishLocalIpCandidate = successfulHost || localIp || stdoutHost || "127.0.0.1";
-
-      // Prefer numeric IP; if we have a non-numeric hostname, try to resolve it to an IP.
-      let publishIp = publishLocalIpCandidate;
-      const isNumericIp = (h) => /^\d+\.\d+\.\d+\.\d+$/.test(h);
-
-      if (!isNumericIp(publishIp)) {
-        // try to resolve hostname to numeric IP
-        try {
-          const dns = require("dns").promises;
-          const lookup = await dns.lookup(publishIp);
-          if (lookup && lookup.address) publishIp = lookup.address;
-        } catch (e) {
-          // resolution failed — fall back to getLocalIp() or loopback
-          publishIp = localIp || "127.0.0.1";
-        }
-      }
-
-      if (!BonjourModule) {
-        console.warn("No mDNS library available (bonjour-service or bonjour). mDNS will not be published.");
-        if (app.isPackaged) {
-          console.warn("If you intended to use bonjour-service, ensure it is listed in dependencies and added to asarUnpack in your build config.");
-        }
-        return;
-      }
-
-      // instantiate bonjour (constructor or factory)
-      try {
-        if (typeof BonjourModule === "function") {
-          try { bonjour = new BonjourModule(); } catch (e) { bonjour = BonjourModule(); }
-        } else if (BonjourModule && typeof BonjourModule.default === "function") {
-          try { bonjour = new BonjourModule.default(); } catch (e) { bonjour = BonjourModule.default(); }
-        } else {
-          bonjour = BonjourModule();
-        }
-      } catch (err) {
-        console.error("Failed to instantiate bonjour module:", err);
-        throw err;
-      }
-
-      if (!bonjour || typeof bonjour.publish !== "function") {
-        console.error("bonjour instance does not support publish(); mDNS will not be published.");
-        return;
-      }
-
-      // 1) advertise the custom AeroDuel service (for device discovery)
-      try {
-        bonjour.publish({
-          name: "AeroDuel Server",
-          type: "aeroduel",
-          port: Number(port),
-          host: publishIp, // numeric IP ensures an A record target
-          txt: { path: "/", version: isDev ? "dev" : "prod" }
-        });
-      } catch (e) {
-        console.warn("Publishing custom aeroduel service failed:", e);
-      }
-
-      // 2) ALSO publish an HTTP service using the hostname `aeroduel` so that aeroduel.local resolves in browsers
-      //    Use `name: "aeroduel"` so the local name becomes `aeroduel.local` and set host to the numeric IP.
-      try {
-        publishedService = bonjour.publish({
-          name: "aeroduel",      // this will advertise aeroduel.local
-          type: "http",
-          port: Number(port),
-          host: publishIp,       // numeric IP — publish the A record target
-          txt: { path: "/", version: isDev ? "dev" : "prod" }
-        });
-      } catch (e) {
-        console.warn("Publishing HTTP aeroduel hostname failed:", e);
-      }
-
-      console.log(`Published mDNS: aeroduel.local -> ${publishIp}:${port}`);
-    } catch (err) {
-      console.error("Failed to publish mDNS service:", err);
-      if (app.isPackaged) {
-        console.warn("If you're packaging the app, ensure the mDNS module is unpacked (asarUnpack) and present in dependencies.");
-      }
+      bonjour.publish({
+        name: "AeroDuel Server",
+        type: "aeroduel",
+        port: Number(port),
+        host: localIp,
+        txt: { path: "/", version: isDev ? "dev" : "prod" }
+      });
+    } catch (e) {
+      console.warn("Publishing custom aeroduel service failed:", e);
     }
 
-  };
-
-  waitForServer();
+    // Publish HTTP service as aeroduel.local
+    try {
+      publishedService = bonjour.publish({
+        name: "aeroduel",
+        type: "http",
+        port: Number(port),
+        host: localIp,
+        txt: { path: "/", version: isDev ? "dev" : "prod" }
+      });
+      console.log(`Published mDNS: aeroduel.local -> ${localIp}:${port}`);
+    } catch (e) {
+      console.warn("Publishing HTTP aeroduel hostname failed:", e);
+    }
+  } catch (err) {
+    console.error("Failed to publish mDNS service:", err);
+  }
 }
 
 app.on("ready", createWindow);
