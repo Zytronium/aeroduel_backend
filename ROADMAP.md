@@ -27,13 +27,22 @@ Note: So far only tested on Linux (Fedora and Zorin OS)
 ### Basic frontend for desktop app UI
 Use Next.js and React to build a basic desktop UI with a single button to start a match on the local network. 
 
+
+### Local Server Hosting
+Next.js API available via LAN at `aeroduel.local:45045` at all times while app is running.
+
 ## In Progress
-none
+
+### Database Integration
+~~MongoDB/PostgreSQL or local database for match state~~. Store game state in memory. Include API endpoints to 
+read data but do not allow clients to write, not even when joining matches (the server will handle that if the 
+endpoint for joining a match does not fail).
+
+### Documentation
+Write up a detailed markdown API.md for the server endpoints. This helps other developers understand the server
+when forking and editing the code, perhaps even to use the API in their own projects.
 
 ## Todo
-
-### Local Server Hosting (next priority)
-Next.js API triggered from a single click in the frontend.
 
 ### RC Plane Registration/Linking
 Users will be able to register their plane with the mobile app. The mobile app will assign a unique ID to that plane and 
@@ -49,6 +58,16 @@ The server then updates the score and sends web socket updates to all connected 
 ### Mobile Integration
 WebSocket implementation for phone controllers.
 
-### Database Integration
-MongoDB/PostgreSQL or local database for match state. Include API endpoints to read data but do not allow clients to 
-write, not even when joining matches (the server will handle that if the endpoint for joining a match does not fail).
+---
+
+## Next steps
+
+- Add endpoint for joining a match
+- Add endpoint for starting a match
+- Add endpoint for ending a match (?)
+- Make the front-end create a new match on click of the button via API call
+- Make the front-end display a game pin and generate a QR code for the match
+- Create a WebSocket server
+- Consider protecting the API endpoints with authentication
+- Add CI/CD
+- Add unit testing

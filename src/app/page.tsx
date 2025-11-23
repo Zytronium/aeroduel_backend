@@ -8,19 +8,38 @@ export default function Home() {
   const [liveMessage, setLiveMessage] = useState("");
   const timeoutRef = useRef<number | null>(null);
 
-  function startMatch() {
+  async function startMatch() {
     if (loading)
       return;
 
     setLoading(true);
-    setLiveMessage("Starting - Coming Soon...");
+    setLiveMessage("Starting match…");
 
-    // restore button after 1.5s
+    try {
+      const response = await fetch("/api/new-match", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ action: "start" })
+      });
+
+      const data = await response.json();
+      setLiveMessage("Response: " + JSON.stringify(data));
+      if (data.success === "true")
+        alert("Match open. Scan the QR code or enter the game PIN to enter the match!");
+      console.log("Response: " + JSON.stringify(data));
+    } catch (err) {
+      setLiveMessage("Error contacting server");
+      alert("Error contacting server");
+    }
+
     timeoutRef.current = window.setTimeout(() => {
       setLoading(false);
       setLiveMessage("");
     }, 1500);
   }
+
 
   useEffect(() => {
     return () => {

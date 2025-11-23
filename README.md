@@ -47,6 +47,16 @@ live scores, and more.
 
 * Node.js (v22 or higher recommended)
 * npm
+* Bonjour (or an equivalent mDNS responder) if running on Windows
+* Avahi (or an equivalent mDNS responder) if running on Linux (if not already installed by default)
+
+### mDNS Responders for Windows
+If you have one of these installed, you can probably skip this:
+- Bonjour Print Services
+- iTunes
+- iCloud for Windows  
+
+This is a non-exhaustive list.
 
 ### Installation
 

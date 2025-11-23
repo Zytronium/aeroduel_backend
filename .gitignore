@@ -22,6 +22,7 @@
 /dist/
 !/dist/aeroduel*.AppImage
 !/dist/aeroduel*.nsis
+!/dist/aeroduel*.exe
 !/dist/aeroduel*.dmg
 
 # debug
