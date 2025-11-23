@@ -16,14 +16,16 @@
 
 The Aeroduel Server API handles match creation, plane registration, game state management, and real-time communication between ESP32s and mobile apps.
 
-**Base URL:** `http://<local-ip>:45045`  
-**WebSocket URL:** `ws://<local-ip>:45045`
+**Base URL:** `http://aeroduel.local:45045`  
+**WebSocket URL:** `ws://aeroduel.local:45045`
 
 ---
 
 ## Authentication
 
-Currently no authentication required. All endpoints are accessible on the local network.
+Currently, no authentication is required. All endpoints are accessible on the local network.
+In the future, the onboard ESP32s will require an auth token for endpoints relating to the game (`POST /api/hit` for example).
+This auth token is given to the ESP32 in the response to `POST /api/register`.
 
 ---
 
