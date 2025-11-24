@@ -1,13 +1,13 @@
 <div align="center">
   <a href="https://github.com/Aeroduel">
-    <img src="public/two-jets-logo.svg" alt="Aeroduel Logo" width="800" />
+    <img src="/public/two-jets-logo.svg" alt="Aeroduel Logo" width="800" />
   </a>
   <br />
   <hr/>
   <br />
-  <img src="public/logo_text.svg" alt="Aeroduel" width="400" />
+  <img src="/public/logo_text.svg" alt="Aeroduel" width="400" />
   <br />
-  <img src="public/server-text.svg" alt="Server" width="150" />
+  <img src="/public/server-text.svg" alt="Server" width="150" />
   <br />
   <h1>Aeroduel Server API Documentation</h1>
 </div>
@@ -390,5 +390,5 @@ Common HTTP status codes:
 
 ---
 
-**Documentation Created**: November 21, 2025
+**Documentation Created**: November 21, 2025  
 **Last Updated**: November 23, 2025

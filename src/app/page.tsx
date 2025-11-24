@@ -5,7 +5,6 @@ import Image from "next/image";
 
 export default function Home() {
   const [loading, setLoading] = useState(false);
-  const [liveMessage, setLiveMessage] = useState("");
   const timeoutRef = useRef<number | null>(null);
 
   async function startMatch() {
@@ -13,7 +12,6 @@ export default function Home() {
       return;
 
     setLoading(true);
-    setLiveMessage("Starting match…");
 
     try {
       const response = await fetch("/api/new-match", {
@@ -25,21 +23,24 @@ export default function Home() {
       });
 
       const data = await response.json();
-      setLiveMessage("Response: " + JSON.stringify(data));
-      if (data.success === "true")
+
+      if (response.status === 409) {
+        alert("A match already exists. Try restarting the app to start a new one");
+      } else if (!response.ok) {
+        alert("An unknown error occurred");
+      } else if (data.success === "true") {
         alert("Match open. Scan the QR code or enter the game PIN to enter the match!");
+      }
+
       console.log("Response: " + JSON.stringify(data));
     } catch (err) {
-      setLiveMessage("Error contacting server");
-      alert("Error contacting server");
+      alert("An unknown error occurred");
     }
 
     timeoutRef.current = window.setTimeout(() => {
       setLoading(false);
-      setLiveMessage("");
     }, 1500);
   }
-
 
   useEffect(() => {
     return () => {
@@ -62,7 +63,7 @@ export default function Home() {
         </p>
       </header>
 
-      <div className="flex flex-1 items-center justify-center">
+      <div className="flex flex-1 flex-col items-center justify-center gap-4">
         <button
           type="button"
           onClick={startMatch}
@@ -76,41 +77,16 @@ export default function Home() {
           disabled={loading}
           aria-pressed={loading}
           aria-busy={loading}
-          className="btn"
+          className={`relative transition-all ${!loading ? 'hover:brightness-110 cursor-pointer' : ''}`}
         >
-          {loading ? (
-            <svg
-              role="img"
-              aria-hidden="true"
-              className="w-7 h-7 animate-spin"
-              viewBox="0 0 24 24"
-              fill="none"
-            >
-              <circle
-                className="opacity-25"
-                cx="12"
-                cy="12"
-                r="10"
-                stroke="currentColor"
-                strokeWidth="4"
-              />
-              <path
-                className="opacity-75"
-                fill="currentColor"
-                d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-              />
-            </svg>
-          ) : null}
-
-          <span aria-hidden={loading ? false : false}>
-            {loading ? "Coming Soon..." : "Start Match"}
-          </span>
+          <Image
+            src={loading ? "/starting-btn.svg" : "/start-match-btn.svg"}
+            alt={loading ? "Starting..." : "Start Match"}
+            width={444}
+            height={102}
+            className={loading ? "opacity-60 backdrop-blur-sm" : ""}
+          />
         </button>
-
-        {/* accessible live region (screen-reader only) */}
-        <span className="sr-only" aria-live="polite">
-          {liveMessage}
-        </span>
       </div>
     </main>
   );
