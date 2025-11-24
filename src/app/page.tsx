@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
+import getServerToken from "@/app/getAuth";
 
 export default function Home() {
   const [loading, setLoading] = useState(false);
@@ -14,18 +15,22 @@ export default function Home() {
     setLoading(true);
 
     try {
+      const token = await getServerToken();
+
       const response = await fetch("/api/new-match", {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
         },
-        body: JSON.stringify({ action: "start" })
+        body: JSON.stringify({ duration: 450, maxPlayers: 4, serverToken: token })
       });
 
       const data = await response.json();
 
-      if (response.status === 409) {
-        alert("A match already exists. Try restarting the app to start a new one");
+      if (response.status === 403) {
+        alert("You are not authorized to start a match from here. Try again in the app.");
+      } else if (response.status === 409) {
+          alert("A match already exists. Try restarting the app to start a new one");
       } else if (!response.ok) {
         alert("An unknown error occurred");
       } else if (data.success === "true") {

@@ -17,6 +17,11 @@ export async function POST(req: Request) {
     );
   }
 
+  // Validate server token
+  if (data.serverToken !== process.env.SERVER_TOKEN) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+  }
+
   // Check if there's already an active match on this server
   let currentMatch: MatchState | null = getCurrentMatch();
   if (currentMatch && currentMatch.status !== "ended") {

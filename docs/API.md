@@ -23,9 +23,11 @@ The Aeroduel Server API handles match creation, plane registration, game state m
 
 ## Authentication
 
-Currently, no authentication is required. All endpoints are accessible on the local network.
+Some endpoints are only accessible when inside the desktop application in order to prevent external tampering by accessing the browser version at `http://aeroduel.local:45045/`.
+These endpoints require a server token. This token is accessible by importing `getServerToken()` from [src/app/getAuth.ts](/src/app/getAuth.ts) and mut be awaited.
 In the future, the onboard ESP32s will require an auth token for endpoints relating to the game (`POST /api/hit` for example).
-This auth token is given to the ESP32 in the response to `POST /api/register`.
+This auth token is given to the ESP32 in the response to `POST /api/register`. Each plane will be given a different auth token
+for each different match.
 
 ---
 
@@ -391,4 +393,4 @@ Common HTTP status codes:
 ---
 
 **Documentation Created**: November 21, 2025  
-**Last Updated**: November 23, 2025
+**Last Updated**: November 24, 2025

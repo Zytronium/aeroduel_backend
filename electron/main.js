@@ -1,11 +1,24 @@
 // Note: requires `bonjour-service` in packaged app/environment.
 
-const { app, BrowserWindow } = require("electron");
+const { app, BrowserWindow, ipcMain } = require("electron"); // Ensure ipcMain is imported
 const path = require("path");
+const crypto = require("crypto");
 const { spawn } = require("child_process");
 const net = require("net");
 const fs = require("fs");
 const os = require("os");
+
+// Generate the server token.
+/*
+* The server token is an authentication code that only the server and the Electron desktop app know.
+* This allows the app to verify an API request came directly from the Electron app and not from an
+* external device.
+*/
+const serverToken = crypto.randomBytes(32).toString("hex");
+
+// Share the server token with the Next.js Server (API routes)
+// This makes process.env.SERVER_TOKEN available to all API endpoints
+process.env.SERVER_TOKEN = serverToken;
 
 // Load bonjour-service, but be resilient to packaging / alternate package
 let BonjourModule = null;
@@ -198,7 +211,14 @@ function publishMDNS(localIp, port, isDev) {
     }
 }
 
-app.on("ready", createWindow);
+app.whenReady().then(() => {
+    // Allow the renderer to ask for the token
+    ipcMain.handle("get-server-token", () => {
+        return serverToken;
+    });
+
+    createWindow();
+});
 
 app.on("window-all-closed", () => {
     if (serverProcess) serverProcess.kill();
