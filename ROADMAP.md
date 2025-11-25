@@ -22,7 +22,7 @@ the future. It must be able to host a server on the local network and support we
 
 ### Production Packaging
 Package native binaries for Linux/Windows/Mac.  
-Note: So far only tested on Linux (Fedora and Zorin OS)
+Note: So far only tested on Linux (Fedora and Zorin OS) and Windows
 
 ### Basic frontend for desktop app UI
 Use Next.js and React to build a basic desktop UI with a single button to start a match on the local network. 
