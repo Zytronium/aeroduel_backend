@@ -300,7 +300,7 @@ const ws = new WebSocket('ws://aeroduel.local:45045');
 {
   planeId: string;
   esp32Ip?: string;
-  playerName: string;
+  playerName?: string;
   userId: string;
   registeredAt: Date;
 }

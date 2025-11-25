@@ -91,7 +91,9 @@ export async function POST(req: Request) {
     maxPlayers,
     serverUrl,
     wsUrl,
-    localIp // for clients that cannot resolve mDNS
+    localIp, // for clients that cannot resolve mDNS
+    matchPlanes: new Map(),
+    events: []
   }));
 
   const qrCodeData = `aeroduel://join?host=${encodeURIComponent(serverHost)}&port=${port}&pin=${gamePin}`;

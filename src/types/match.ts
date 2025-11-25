@@ -16,7 +16,7 @@ export interface MatchState {
 export interface RegisteredPlane {
   planeId: string;
   esp32Ip?: string;
-  playerName: string;
+  playerName?: string;
   userId: string;
   registeredAt: Date;
 }
