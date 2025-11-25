@@ -95,8 +95,9 @@ standalone mode, and then package it with Electron.
 
 ## Features
 
-* **One-Click Hosting (coming soon):** Zero configuration required. The app automatically finds an open port and binds
-  to the local network interface.
+* **Automatic Server Hosting:** Zero configuration required. The app automatically hosts a server on the local network at http://aeroduel.local:45045.
+* **Local Network Access:** The server exposes an API that can be accessed from any device connected
+  to the local network interface. This API is protected so that only the devices that need to access it can access it.
 * **Real-time Communication with RC Planes:** Using WebSockets or similar, the server maintains low-latency
   communication with the RC planes during each match to keep live score and run game logic.
 * **Hybrid Architecture:** leverages Next.js "Standalone" mode to bundle a full Node.js server inside a desktop
@@ -108,13 +109,14 @@ standalone mode, and then package it with Electron.
 
 ## Modding & Open Source
 
-We built Aeroduel to be hacked on. The game logic resides entirely within this backend application. This means
-developers
-can fork this repository to customize the game experience. Anything from tweaked game logic to full-on custom game modes
-can be built with the right skill set and experience. Add AI to the mix, and you don't even have to know how to code to
-make modifications!
+We built Aeroduel to be hacked on. The game logic resides entirely within this backend application. This means 
+developers can fork this repository to customize the game experience. Anything from tweaked game logic to full-on
+custom game modes can be built with the right skill set and experience. Add AI to the mix, and you don't even have
+to know how to code to make modifications!
 
-We encourage the community to fork, modify, and play around with the code!
+We encourage the community to fork, modify, and play around with the code! Our only requirement is that you adhere 
+to the MIT license and provide attribution for this project if you decide to use it in a public project — commercially
+or otherwise.
 
 ## Project Structure
 
@@ -131,11 +133,11 @@ aeroduel_backend/
 
 - [x] **Core Server Architecture:** Next.js running inside Electron.
 - [x] **Production Packaging:** Native binaries for Linux/Windows/Mac.
-- [X] **Local Server Hosting:** Next.js API available via LAN at `aeroduel.local:45045` at all times
+- [X] **Local Server Hosting:** Next.js API available via LAN at `aeroduel.local:45045` at all times.
 - [ ] **Plane Registration/Linking** Let users register their planes and link the physical plane's software with the
   local server during a match.
 - [ ] **Game Logic Implementation:** Hit processing and score tracking.
-- [ ] **Mobile Integration:** WebSocket implementation for phone controllers.
+- [ ] **Mobile Integration:** WebSocket implementation to keep mobile app updated with live scores and game state.
 
 ## License
 
