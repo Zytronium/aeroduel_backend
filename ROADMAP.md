@@ -31,6 +31,10 @@ Use Next.js and React to build a basic desktop UI with a single button to start 
 ### Local Server Hosting
 Next.js API available via LAN at `aeroduel.local:45045` at all times while app is running.
 
+### Game Logic Implementation
+Hit processing and score tracking. When a plane locks on to the target, it sends a signal to the server confirming a hit.
+The server then updates the score and sends web socket updates to all connected mobile devices.
+
 ## In Progress
 
 ### Database Integration
@@ -50,10 +54,6 @@ associate it with its user as the pilot. We need to figure out how we are going 
 the server knows which planes are in the match. We also need to decide whether planes will be registered globally or
 only locally on the users' devices. It would be easiest to register only locally, but then it would be possile for 
 plane IDs to overlap. 
-
-### Game Logic Implementation
-Hit processing and score tracking. When a plane locks on to the target, it sends a signal to the server confirming a hit.
-The server then updates the score and sends web socket updates to all connected mobile devices.
 
 ### Mobile Integration
 WebSocket implementation for phone controllers.
