@@ -62,9 +62,8 @@ WebSocket implementation for phone controllers.
 
 ## Next steps
 
-- Add endpoint for joining a match
 - Add endpoint for starting a match
-- Add endpoint for ending a match (?)
+- Add endpoint for force ending a match (?)
 - Make the front-end create a new match on click of the button via API call
 - Make the front-end display a game pin and generate a QR code for the match
 - Create a WebSocket server
