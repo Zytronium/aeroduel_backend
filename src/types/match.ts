@@ -5,7 +5,7 @@ export interface MatchState {
   createdAt: Date;
   matchType: "timed"; // | "scored" | "lives"; // (Stretch goal match types)
   duration: number; // match duration in seconds
-  registeredPlanes: RegisteredPlane[];
+  onlinePlanes: RegisteredPlane[];
   matchPlanes: Map<string, MatchPlane>;
   maxPlayers: number;
   serverUrl: string;

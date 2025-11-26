@@ -42,7 +42,7 @@ export async function POST(req: Request) {
   }
 
   // Validate targetId is a valid planeId in the current match
-  const targetPlane = match.registeredPlanes.find(p => p.planeId === targetId);
+  const targetPlane = match.onlinePlanes.find(p => p.planeId === targetId);
   if (!targetPlane) {
     return NextResponse.json(
       { error: "Target plane is not in this match." },
@@ -51,7 +51,7 @@ export async function POST(req: Request) {
   }
 
   // Validate planeId is a valid planeId in the current match and not targetId
-  const plane = match.registeredPlanes.find(p => p.planeId === planeId && p.planeId !== targetId);
+  const plane = match.onlinePlanes.find(p => p.planeId === planeId && p.planeId !== targetId);
   if (!plane) {
     return NextResponse.json(
       { error: "Attacking plane ID is not in this match or is identical to the target plane ID." },

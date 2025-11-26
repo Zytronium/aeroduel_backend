@@ -403,19 +403,19 @@ Common HTTP status codes:
   - INPUT: `{ authToken, planeId, targetId, timestamp }`
   - OUTPUT: `success`
 
+- `GET /api/planes` - List all online planes
+    - Returns a list of all online planes, including whether they have joined the
+      current match or not and, if the match is ongoing, their current score.
+    - Anyone can make a request to this endpoint. Sensitive info such as auth tokens is excluded
+    - INPUT: none
+    - OUTPUT: `[{ planeId, userId?, playerName, score? }]`
+
 ## Future Endpoints
 - `POST /api/start-match` - Begins an Aeroduel match
   - Updates the match in memory to be active and sends WebSocket updates to ESP32s and mobile apps
   - Only the sever's front-end can make requests to this endpoint, and this is enforced
   - INPUT: `serverToken` 
   - OUTPUT: `success, match`
-
-- `GET /api/planes` - List online planes
-  - Returns a list of all online planes, including whether they have joined the 
-current match or not and, if the match is ongoing, their current score.
-  - Anyone can make a request to this endpoint. Sensitive info such as auth tokens is excluded
-  - INPUT: none
-  - OUTPUT: `[{ planeId, userId?, playerName, score? }]`
 
 ## Possible Additional Future Endpoints
 - `GET /api/match/:id` - Get match details

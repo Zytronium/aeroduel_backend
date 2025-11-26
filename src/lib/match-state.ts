@@ -82,15 +82,15 @@ export function registerPlane(matchId: string, planeData: RegisteredPlane): bool
     return false;
   
   // Check if plane already registered, if so update it
-  const existingIndex = currentMatch.registeredPlanes.findIndex(p => p.planeId === planeData.planeId);
+  const existingIndex = currentMatch.onlinePlanes.findIndex(p => p.planeId === planeData.planeId);
   
   if (existingIndex >= 0) {
-    currentMatch.registeredPlanes[existingIndex] = {
-      ...currentMatch.registeredPlanes[existingIndex],
+    currentMatch.onlinePlanes[existingIndex] = {
+      ...currentMatch.onlinePlanes[existingIndex],
       ...planeData
     };
   } else {
-    currentMatch.registeredPlanes.push(planeData);
+    currentMatch.onlinePlanes.push(planeData);
   }
   
   return true;
@@ -131,14 +131,14 @@ export function validateUserAuthToken(
 export function joinPlaneToMatch(gamePin: string, planeId: string, playerName: string): boolean {
   if (!currentMatch || currentMatch.gamePin !== gamePin) return false;
 
-  const planeIndex = currentMatch.registeredPlanes.findIndex(
+  const planeIndex = currentMatch.onlinePlanes.findIndex(
     (p) => p.planeId === planeId
   );
 
   // Plane must be registered first (via /api/register)
   if (planeIndex === -1) return false;
 
-  currentMatch.registeredPlanes[planeIndex].playerName = playerName;
+  currentMatch.onlinePlanes[planeIndex].playerName = playerName;
 
   // Trigger WebSocket update here in the future
 

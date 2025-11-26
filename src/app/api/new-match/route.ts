@@ -87,7 +87,7 @@ export async function POST(req: Request) {
     createdAt: new Date(),
     matchType: "timed",
     duration,
-    registeredPlanes: [],
+    onlinePlanes: [],
     maxPlayers,
     serverUrl,
     wsUrl,
