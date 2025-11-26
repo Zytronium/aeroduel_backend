@@ -378,9 +378,9 @@ Common HTTP status codes:
   - INPUT: `{ serverToken, duration?, maxPlayers? }`
   - OUTPUT: `{ success, match }` (includes `matchId`, `gamePin`, URLs, QR payload, etc.)
 
-- `POST /api/register` – Registers that a plane is online and associates it with the current match
+- `POST /api/register` – Registers that a plane is online, but doesn't associate it with the current match yet
   - Called by the plane’s ESP32 once it is on Wi‑Fi
-  - Registers/updates the plane in the in‑memory `registeredPlanes` list for the active match
+  - Registers/updates the plane in the in‑memory `registeredPlanes` list
   - Generates and stores a per‑match auth token for that `planeId` (used for future plane‑specific requests)
   - INPUT: `{ planeId, esp32Ip, userId }`
   - OUTPUT: `{ success, authToken, matchId }`
