@@ -1,5 +1,10 @@
 import { NextResponse } from "next/server";
-import { getCurrentMatch, registerPlane, setPlaneAuthToken } from "@/lib/match-state";
+import {
+  getCurrentMatch,
+  getSessionId,
+  registerPlane,
+  setPlaneAuthToken
+} from "@/lib/match-state";
 import { generateAuthToken } from "@/lib/utils";
 
 export async function POST(req: Request) {
@@ -11,49 +16,50 @@ export async function POST(req: Request) {
     }
 
     const { planeId, esp32Ip, userId } = data;
+    // note: esp32Ip may not be needed
 
-    if (!planeId || !esp32Ip || !userId) {
+    if (!planeId/* || !esp32Ip || !userId*/) {
         return NextResponse.json(
-            { error: "Missing required fields: planeId, esp32Ip, and userId are required." },
+            { error: "Missing required field: planeId is required." },
             { status: 400 }
         );
     }
 
-    // Check if a match exists
-    const match = getCurrentMatch();
-    if (!match || match.status === "ended") {
-        return NextResponse.json(
-            { error: "No active match found to register to." },
-            { status: 404 }
-        );
-    }
+  // Get current match if it exists (may be null)
+  const match = getCurrentMatch();
 
-    // Generate a new auth token for this session
-    const authToken = generateAuthToken();
+  // Generate a new auth token for this session
+  const authToken = generateAuthToken();
 
-    // Register the plane in the current match state
-    // We store the authToken in memory associated with this planeId for this match
-    // For now, we will just store basic info in the match state
-    const success = registerPlane(match.matchId, {
-        planeId,
-        esp32Ip,
-        userId,
-        registeredAt: new Date(),
-    });
+  // Register/update the plane in our in-memory plane store
+  const success = registerPlane({
+    hits: 0,
+    hitsTaken: 0,
+    isDisqualified: false,
+    isJoined: false,
+    isOnline: true,
+    playerName: "",
+    planeId,
+    esp32Ip, // todo: we can assume this from requester's IP address if not provided
+    userId,
+    registeredAt: new Date()
+  });
 
-    if (!success) {
-        return NextResponse.json(
-            { error: "Failed to register plane. Match may have ended." },
-            { status: 500 }
-        );
-    }
+  if (!success) {
+    return NextResponse.json(
+      { error: "Failed to register plane." },
+      { status: 500 }
+    );
+  }
 
-    // Store the auth token securely on the server, mapped to matchId + planeId
-    setPlaneAuthToken(match.matchId, planeId, authToken);
+  // If a match exists, associate this plane's auth token with that match
+  if (match) {
+    setPlaneAuthToken(getSessionId(), planeId, authToken);
+  }
 
-    return NextResponse.json({
-        success: true,
-        authToken: authToken,
-        matchId: match.matchId,
-    });
+  return NextResponse.json({
+    success: true,
+    authToken,
+    matchId: match?.matchId ?? null,
+  });
 }

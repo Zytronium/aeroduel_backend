@@ -28,7 +28,7 @@ live scores, and more.
 
 ### How it Works
 
-1. **Host:** One user runs this desktop app. Simply click "Start Match" to open a local server.
+1. **Host:** One user runs this desktop app. Simply click "Start Match" to start a match on the local server.
 2. **Connect:** Players connect their phones to the same WiFi network the computer is on. This can be a standard Wi-Fi
    network or a mobile hotspot.
 3. **Play:** Players scan a QR code or enter a Game PIN to register their plan for the dogfight match.
@@ -117,6 +117,12 @@ to know how to code to make modifications!
 We encourage the community to fork, modify, and play around with the code! Our only requirement is that you adhere 
 to the MIT license and provide attribution for this project if you decide to use it in a public project — commercially
 or otherwise.
+
+## Known issues
+Besides the fact that the application is incomplete, there are a few known issues.
+
+- Some phones, including some or all Android 13 phones, do not support using mDNS to connect to aeroduel.local:45045. This may affect the mobile app's ability to work on some devices. We are unsure if this is something we can fix on our end.
+  - Possible workaround we can implement: Buy aeroduel.com or similar and send the game PIN to an API running on it. This would also allow for players to not need to be on the same wifi network anymore. 
 
 ## Project Structure
 

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import {
-  getCurrentMatch,
+  getCurrentMatch, getOnlinePlanes,
   registerHit,
   validatePlaneAuthToken
 } from "@/lib/match-state";
@@ -32,6 +32,9 @@ export async function POST(req: Request) {
     );
   }
 
+  // get online planes
+  const onlinePlanes = getOnlinePlanes();
+
   // Validate authToken against the one generated in /api/register
   const isValidToken = validatePlaneAuthToken(match.matchId, planeId, authToken);
   if (!isValidToken) {
@@ -42,7 +45,7 @@ export async function POST(req: Request) {
   }
 
   // Validate targetId is a valid planeId in the current match
-  const targetPlane = match.registeredPlanes.find(p => p.planeId === targetId);
+  const targetPlane = onlinePlanes.find(p => p.planeId === targetId);
   if (!targetPlane) {
     return NextResponse.json(
       { error: "Target plane is not in this match." },
@@ -51,7 +54,7 @@ export async function POST(req: Request) {
   }
 
   // Validate planeId is a valid planeId in the current match and not targetId
-  const plane = match.registeredPlanes.find(p => p.planeId === planeId && p.planeId !== targetId);
+  const plane = onlinePlanes.find(p => p.planeId === planeId && p.planeId !== targetId);
   if (!plane) {
     return NextResponse.json(
       { error: "Attacking plane ID is not in this match or is identical to the target plane ID." },
@@ -62,5 +65,5 @@ export async function POST(req: Request) {
   registerHit(planeId, targetId, timestamp);
   console.log(`Plane ${plane.playerName} hit plane ${targetPlane.playerName} at ${timestamp}`);
 
-  return NextResponse.json({ error: "Not implemented" }, { status: 501 });
+  return NextResponse.json({ success: true });
 }

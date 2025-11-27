@@ -5,34 +5,34 @@ export interface MatchState {
   createdAt: Date;
   matchType: "timed"; // | "scored" | "lives"; // (Stretch goal match types)
   duration: number; // match duration in seconds
-  registeredPlanes: RegisteredPlane[];
-  matchPlanes: Map<string, MatchPlane>;
+  matchPlanes: string[]; // planeIds of planes that have joined the match
   maxPlayers: number;
   serverUrl: string;
   wsUrl: string;
   events: Event[];
 }
 
-export interface RegisteredPlane {
-  planeId: string;
+export interface Plane {
+  /* Registration info */
   esp32Ip?: string;
-  playerName?: string;
+  planeId: string;
   userId: string;
+  playerName?: string;
   registeredAt: Date;
-}
 
-export interface MatchPlane {
-  // planeId: string;
-  // esp32Ip?: string;
-  // playerName?: string;
-  // userId: string;
-  hits: number;
-  hitsTaken: number;
+  /* Match info */
+  hits?: number;
+  hitsTaken?: number;
+
+  /* Misc booleans */
+  isOnline: boolean;
+  isJoined: boolean;
+  isDisqualified: boolean;
 }
 
 export interface Event {
-  type: "hit";
+  type: "join" | "leave" | "hit" | "disqualify";
   planeId: string;
-  targetId: string;
+  targetId?: string; // for hit events
   timestamp: Date;
 }

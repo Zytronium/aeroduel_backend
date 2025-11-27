@@ -30,7 +30,7 @@ export async function POST(req: Request) {
   }
 
   // Validate userId matches the userId for this plane in current match state
-  if (userId !== match.registeredPlanes.find(p => p.planeId === planeId)?.userId) {
+  if (userId !== match.onlinePlanes.find(p => p.planeId === planeId)?.userId) {
     return NextResponse.json(
       { error: "User ID does not belong to this plane." },
       { status: 400 }
@@ -45,7 +45,7 @@ export async function POST(req: Request) {
   }
 
   // Check max players
-  const currentPlayers = match.registeredPlanes.filter(p => p.playerName).length;
+  const currentPlayers = match.onlinePlanes.filter(p => p.playerName).length;
   if (currentPlayers >= match.maxPlayers) {
     return NextResponse.json(
       { error: "Match is full." },

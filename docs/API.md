@@ -378,9 +378,9 @@ Common HTTP status codes:
   - INPUT: `{ serverToken, duration?, maxPlayers? }`
   - OUTPUT: `{ success, match }` (includes `matchId`, `gamePin`, URLs, QR payload, etc.)
 
-- `POST /api/register` – Registers that a plane is online and associates it with the current match
+- `POST /api/register` – Registers that a plane is online, but doesn't associate it with the current match yet
   - Called by the plane’s ESP32 once it is on Wi‑Fi
-  - Registers/updates the plane in the in‑memory `registeredPlanes` list for the active match
+  - Registers/updates the plane in the in‑memory `registeredPlanes` list
   - Generates and stores a per‑match auth token for that `planeId` (used for future plane‑specific requests)
   - INPUT: `{ planeId, esp32Ip, userId }`
   - OUTPUT: `{ success, authToken, matchId }`
@@ -403,6 +403,13 @@ Common HTTP status codes:
   - INPUT: `{ authToken, planeId, targetId, timestamp }`
   - OUTPUT: `success`
 
+- `GET /api/planes` - List all online planes
+    - Returns a list of all online planes, including whether they have joined the
+      current match or not and, if the match is ongoing, their current score.
+    - Anyone can make a request to this endpoint. Sensitive info such as auth tokens is excluded
+    - INPUT: none
+    - OUTPUT: `[{ planeId, userId?, playerName, score? }]`
+
 ## Future Endpoints
 - `POST /api/start-match` - Begins an Aeroduel match
   - Updates the match in memory to be active and sends WebSocket updates to ESP32s and mobile apps
@@ -413,7 +420,6 @@ Common HTTP status codes:
 ## Possible Additional Future Endpoints
 - `GET /api/match/:id` - Get match details
 - `DELETE /api/match/:id` - Cancel/end match
-- `GET /api/planes` - List registered planes
 - `GET /api/match/:id/events` - Get match events such as hits
 
 ---
