@@ -92,7 +92,7 @@ export async function POST(req: Request) {
     serverUrl,
     wsUrl,
     localIp, // for clients that cannot resolve mDNS
-    matchPlanes: new Map(),
+    matchPlanes: [],
     events: []
   }));
 
@@ -103,14 +103,14 @@ export async function POST(req: Request) {
     match: {
       matchId,
       gamePin,
+      qrCodeData,
       status: "waiting",
       matchType: "timed",
       duration,
       maxPlayers,
       serverUrl,
       wsUrl,
-      qrCodeData,
-      registeredPlanes: [],
+      matchPlanes: [],
       localIp // useful fallback for diagnostic UI / QR payloads
     }
   });

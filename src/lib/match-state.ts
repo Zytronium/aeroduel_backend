@@ -1,7 +1,7 @@
 import { MatchState, Plane } from "@/types";
 import { generateAuthToken, generateMatchId } from "@/lib/utils";
 
-let sessionId = generateMatchId(); // TODO: change this every time a match ENDS in order to invalidate all plane & user auth tokens after each match
+let sessionId = generateMatchId(); // TODO: change this every time a match ENDS in order to invalidate all plane auth tokens after each match
 let currentMatch: MatchState | null = null;
 export const planes: Plane[] = [];
 

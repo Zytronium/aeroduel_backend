@@ -1,5 +1,10 @@
 import { NextResponse } from "next/server";
-import { getCurrentMatch, joinPlaneToMatch, setUserAuthToken } from "@/lib/match-state";
+import {
+  getCurrentMatch,
+  getOnlinePlanes,
+  joinPlaneToMatch,
+  setUserAuthToken
+} from "@/lib/match-state";
 import { generateAuthToken } from "@/lib/utils";
 
 export async function POST(req: Request) {
@@ -29,8 +34,11 @@ export async function POST(req: Request) {
     );
   }
 
+  // get all online planes
+  const onlinePlanes = getOnlinePlanes();
+
   // Validate userId matches the userId for this plane in current match state
-  if (userId !== match.onlinePlanes.find(p => p.planeId === planeId)?.userId) {
+  if (userId !== onlinePlanes.find(p => p.planeId === planeId)?.userId) {
     return NextResponse.json(
       { error: "User ID does not belong to this plane." },
       { status: 400 }
@@ -45,7 +53,7 @@ export async function POST(req: Request) {
   }
 
   // Check max players
-  const currentPlayers = match.onlinePlanes.filter(p => p.playerName).length;
+  const currentPlayers = onlinePlanes.filter(p => p.playerName).length;
   if (currentPlayers >= match.maxPlayers) {
     return NextResponse.json(
       { error: "Match is full." },
@@ -55,7 +63,7 @@ export async function POST(req: Request) {
 
   // Generate a new auth token for this session
   const authToken = generateAuthToken();
-  const success = joinPlaneToMatch(gamePin, planeId, playerName);
+  const success = joinPlaneToMatch(planeId, playerName);
 
   if (!success) {
     return NextResponse.json(
