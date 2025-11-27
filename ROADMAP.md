@@ -56,7 +56,7 @@ only locally on the users' devices. It would be easiest to register only locally
 plane IDs to overlap. 
 
 ### Mobile Integration
-WebSocket implementation for phone controllers.
+WebSocket implementation for mobile app.
 
 ---
 
