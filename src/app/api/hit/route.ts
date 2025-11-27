@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import {
-  getCurrentMatch, getOnlinePlanes,
+  getCurrentMatch, getOnlinePlanes, getSessionId,
   registerHit,
   validatePlaneAuthToken
 } from "@/lib/match-state";
@@ -36,7 +36,7 @@ export async function POST(req: Request) {
   const onlinePlanes = getOnlinePlanes();
 
   // Validate authToken against the one generated in /api/register
-  const isValidToken = validatePlaneAuthToken(match.matchId, planeId, authToken);
+  const isValidToken = validatePlaneAuthToken(getSessionId(), planeId, authToken);
   if (!isValidToken) {
     return NextResponse.json(
       { error: "Invalid auth token for this plane." },

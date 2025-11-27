@@ -177,11 +177,11 @@ export function setPlaneAuthToken(matchId: string, planeId: string, authToken: s
 
 // Validate that the provided auth token matches what we stored
 export function validatePlaneAuthToken(
-  matchId: string,
+  sessionId: string,
   planeId: string,
   authToken: string
 ): boolean {
-  const key = `${matchId}:${planeId}`;
+  const key = `${sessionId}:${planeId}`;
   return planeAuthTokens.get(key) === authToken;
 }
 
