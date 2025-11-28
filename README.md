@@ -82,30 +82,27 @@ This is a non-exhaustive list.
 To create a distributable desktop application (AppImage, dmg, exe), you must first build the Next.js application in
 standalone mode, and then package it with Electron.
 
-1. **Build Next.js source:**
-   ```bash
-   npm run build
-   ```
-
-2. **Package the Application:**
-   ```bash
-   npx electron-builder
-   ```
-   *Note: The output will be located in the `dist` directory.*
+**Build Next.js source and package the application:**
+```bash
+npm run e-build
+```
+*Note: The output will be located in the `dist` directory.*
 
 ## Features
 
-* **Automatic Server Hosting:** Zero configuration required. The app automatically hosts a server on the local network at http://aeroduel.local:45045.
+* **Automatic Server Hosting:** Zero configuration required. The app automatically hosts a server on the local 
+  network at http://aeroduel.local:45045.
 * **Local Network Access:** The server exposes an API that can be accessed from any device connected
-  to the local network interface. This API is protected so that only the devices that need to access it can access it.
+  to the local network interface. This API is protected by auth tokens so that endpoints can only be used by the 
+  devices that need to access them.
 * **Real-time Communication with RC Planes:** Using WebSockets or similar, the server maintains low-latency
   communication with the RC planes during each match to keep live score and run game logic.
 * **Hybrid Architecture:** leverages Next.js "Standalone" mode to bundle a full Node.js server inside a desktop
   executable.
 * **Amazing UI:** Handmade UI elements and animations to create a modern and sleek experience while keeping the UI
   simple and intuitive.
-* **Open Source:** Built with open source technologies like Next.js, Electron, and Tailwind CSS. Fork the project and
-  customize it to your heart's content!
+* **Open Source:** Built with open source technologies like Next.js, Electron, and Tailwind CSS, well documented, 
+  and fully open source. Fork the project and customize it to your heart's content!
 
 ## Modding & Open Source
 
@@ -121,8 +118,10 @@ or otherwise.
 ## Known issues
 Besides the fact that the application is incomplete, there are a few known issues.
 
-- Some phones, including some or all Android 13 phones, do not support using mDNS to connect to aeroduel.local:45045. This may affect the mobile app's ability to work on some devices. We are unsure if this is something we can fix on our end.
-  - Possible workaround we can implement: Buy aeroduel.com or similar and send the game PIN to an API running on it. This would also allow for players to not need to be on the same wifi network anymore. 
+- Some phones, including some or all Android 13 phones, do not support using mDNS to connect to aeroduel.local:45045. 
+  This may affect the mobile app's ability to work on some devices. We are unsure if this is something we can fix on our end.
+  - Possible workaround we can implement: Buy aeroduel.com (or similar) and send the game PIN to an API running on it. 
+    This would also allow for players to not need to be on the same wifi network anymore. 
 
 ## Project Structure
 
@@ -140,10 +139,11 @@ aeroduel_backend/
 - [x] **Core Server Architecture:** Next.js running inside Electron.
 - [x] **Production Packaging:** Native binaries for Linux/Windows/Mac.
 - [X] **Local Server Hosting:** Next.js API available via LAN at `aeroduel.local:45045` at all times.
-- [ ] **Plane Registration/Linking** Let users register their planes and link the physical plane's software with the
+- [X] **Plane Registration/Linking** Let users register their planes and link the physical plane's software with the
   local server during a match.
-- [ ] **Game Logic Implementation:** Hit processing and score tracking.
-- [ ] **Mobile Integration:** WebSocket implementation to keep mobile app updated with live scores and game state.
+- [X] **Game Logic Implementation:** Hit processing and score tracking.
+- [ ] **Complete API:** API endpoints for everything required for the game, from linking planes and starting matches to registering hits and disqualifying planes.
+- [ ] **WebSocket Integration:** WebSocket implementation to keep mobile app updated with live scores and game state and send commands to planes.
 
 ## License
 

@@ -13,11 +13,12 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  const { authToken, planeId, targetId, timestamp } = data;
+  const timestamp = new Date();
+  const { authToken, planeId, targetId } = data;
 
-  if (!authToken || !planeId || !targetId || !timestamp) {
+  if (!authToken || !planeId || !targetId) {
     return NextResponse.json(
-      { error: "Missing required fields. authToken, planeId, targetId, and timestamp are required." },
+      { error: "Missing required fields. authToken, planeId, and targetId are required." },
       { status: 400 }
     );
   }
