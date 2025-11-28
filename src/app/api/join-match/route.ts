@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import {
-  getCurrentMatch,
+  getCurrentMatch, getJoinedPlanes,
   getOnlinePlanes,
   joinPlaneToMatch,
   setUserAuthToken
@@ -15,23 +15,35 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  const { gamePin, planeId, playerName, userId } = data;
+  const { planeId, playerName, userId } = data;
   // TODO: Decide whether to use a custom playerName, generate a name (i.e. Bravo-5 or Player 1), or not use it at all.
 
-  if (!gamePin || !planeId || !userId || !playerName) {
+  if (!planeId || !userId || !playerName) {
     return NextResponse.json(
-      { error: "Missing required fields: gamePin, planeId, userId, and playerName are required." },
+      { error: "Missing required fields: planeId, userId, and playerName are required." },
       { status: 400 }
     );
   }
 
-  // Validate Game PIN
+  // Get current match and ensure it's waiting for players to join
   const match = getCurrentMatch();
-  if (!match || match.gamePin !== gamePin) {
+  if (!match) {
     return NextResponse.json(
-      { error: "Invalid Game PIN or no match active." },
+      { error: "No match active." },
       { status: 404 }
     );
+  }
+  if (match.status === "active") {
+    return NextResponse.json(
+      { error: "The current match has already started." },
+      { status: 409 }
+    )
+  }
+  if (match.status === "ended") {
+    return NextResponse.json(
+      { error: "The latest match has already ended and a new match waiting room has not been opened yet." },
+      { status: 410 }
+    )
   }
 
   // get all online planes
@@ -45,15 +57,8 @@ export async function POST(req: Request) {
     );
   }
 
-  if (match.status !== "waiting") {
-    return NextResponse.json(
-      { error: "Match is already in progress or ended." },
-      { status: 409 }
-    );
-  }
-
   // Check max players
-  const currentPlayers = onlinePlanes.filter(p => p.playerName).length;
+  const currentPlayers = getJoinedPlanes().length;
   if (currentPlayers >= match.maxPlayers) {
     return NextResponse.json(
       { error: "Match is full." },
@@ -67,7 +72,7 @@ export async function POST(req: Request) {
 
   if (!success) {
     return NextResponse.json(
-      { error: "Plane not registered. Please ensure the plane is turned on and connected to WiFi first." },
+      { error: "Plane not registered as online. Please ensure the plane is turned on and connected to the correct WiFi network first." },
       { status: 400 }
     );
   }
