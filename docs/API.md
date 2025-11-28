@@ -263,22 +263,20 @@ Returns a list of all registered planes, including their current match status an
 
 **Success Response (200):**
 ```json
-{
-  "planes": [
-    {
-      "planeId": "uuid-of-plane",
-      "userId": "uuid-of-user",
-      "esp32Ip": "192.168.1.101",
-      "playerName": "Foxtrot-4",
-      "registeredAt": "2025-11-28T12:00:00Z",
-      "hits": 3,
-      "hitsTaken": 1,
-      "isOnline": true,
-      "isJoined": true,
-      "isDisqualified": false
-    }
-  ]
-}
+[
+  {
+    "planeId": "uuid-of-plane",
+    "userId": "uuid-of-user",
+    "esp32Ip": "192.168.1.101",
+    "playerName": "Foxtrot-4",
+    "registeredAt": "2025-11-28T12:00:00Z",
+    "hits": 3,
+    "hitsTaken": 1,
+    "isOnline": true,
+    "isJoined": true,
+    "isDisqualified": false
+  }
+]
 ```
 
 **Response Fields:**
@@ -297,7 +295,7 @@ Returns a list of all registered planes, including their current match status an
 - Returns all registered planes regardless of online/match status
 - Sensitive data like auth tokens is excluded from response
 - Scores (`hits`, `hitsTaken`) only meaningful during active matches
-- Planes persist in memory until server restart
+- Planes persist in memory until the server restarts
 
 ---
 
@@ -406,10 +404,11 @@ const ws = new WebSocket('ws://aeroduel.local:45045');
 
 ### Match Flow
 1. **Create Match** - Desktop app calls `/api/new-match`
-2. **Registration** - Players scan QR or enter game PIN; mobile app calls `/api/join-match`
+2. **Registration** - Players click the join button in the mobile app, which calls `/api/join-match`
 3. **Start Match** - When ready, desktop app calls `/api/start-match`
 4. **Gameplay** - ESP32s report hits via `/api/hit`, server broadcasts updates via WebSocket
-5. **End Match** - Timer expires, server calculates winner and broadcasts results
+5. **Admin Controls** - In the event of a crash or cheating player, the desktop app can disqualify a player. It can also end a match early. Potential future controls are pausing a match, adjusting scores, and changing the time left.
+6. **End Match** - Timer expires, and the server calculates the winner and broadcasts results
 
 ### Scoring (Timed Mode) 
 - Each hit on another plane: +1 point
