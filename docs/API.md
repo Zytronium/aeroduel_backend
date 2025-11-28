@@ -47,7 +47,10 @@ is reset when a new match begins.
 
 ### POST `/api/new-match`
 
-Creates a new Aeroduel match in "waiting" state. Requires a server token for authentication.
+Creates a new Aeroduel match in "waiting" state. Requires a server token for
+authentication. Validates `duration` (30–1800 seconds) and `maxPlayers` (2–16)
+and detects the local IP and constructs `serverUrl`, `wsUrl`, and `qrCodeData`
+using mDNS hostname (fallback to local IP)
 
 **Request Body:**
 ```json
@@ -147,7 +150,9 @@ Creates a new Aeroduel match in "waiting" state. Requires a server token for aut
 
 Registers that a plane is online. Called when a plane's ESP32 is powered on and
 the LoRa connects to the WiFi network.  
-Returns the auth token the ESP32 will use for plane-specific requests.
+Registers/updates the plane in the in‑memory `planes` list. Generates and 
+returns the auth token the ESP32 will use for plane-specific requests.
+
 
 **Request Body:**
 ```json
@@ -174,6 +179,8 @@ Returns the auth token the ESP32 will use for plane-specific requests.
 Adds a plane to the current match's waiting room.
 Returns the auth token the mobile app will use for mobile-specific requests
 during this match.
+Ensures the match is still in `waiting` state and the requesting `userId` matches 
+the one associated with the given `planeId` and enforces the `maxPlayers` limit.
 
 **Request Body:**
 ```json
@@ -245,6 +252,52 @@ hit count. Can only be called by the ESP32s, as enforced by the auth token.
   "success": true
 }
 ```
+
+### GET `/api/planes`
+
+Returns a list of all registered planes, including their current match status and scores if applicable.
+
+**Authentication:** None required (public endpoint)
+
+**Request:** No parameters required
+
+**Success Response (200):**
+```json
+{
+  "planes": [
+    {
+      "planeId": "uuid-of-plane",
+      "userId": "uuid-of-user",
+      "esp32Ip": "192.168.1.101",
+      "playerName": "Foxtrot-4",
+      "registeredAt": "2025-11-28T12:00:00Z",
+      "hits": 3,
+      "hitsTaken": 1,
+      "isOnline": true,
+      "isJoined": true,
+      "isDisqualified": false
+    }
+  ]
+}
+```
+
+**Response Fields:**
+- `planeId` - Unique identifier for the plane
+- `userId` - User account linked to this plane (nullable)
+- `esp32Ip` - IP address of the plane's ESP32 (nullable)
+- `playerName` - Display name for the player (nullable until joined)
+- `registeredAt` - Timestamp when plane first registered
+- `hits` - Number of successful hits scored (default: 0)
+- `hitsTaken` - Number of hits received (default: 0)
+- `isOnline` - Whether the plane is currently connected
+- `isJoined` - Whether the plane has joined the current match
+- `isDisqualified` - Whether the plane has been disqualified
+
+**Notes:**
+- Returns all registered planes regardless of online/match status
+- Sensitive data like auth tokens is excluded from response
+- Scores (`hits`, `hitsTaken`) only meaningful during active matches
+- Planes persist in memory until server restart
 
 ---
 
@@ -395,44 +448,34 @@ Common HTTP status codes:
 
 ## Current Endpoints
 - `POST /api/new-match` – Creates a new Aeroduel match in waiting state
-  - Uses a server-only token (`SERVER_TOKEN` env var) to ensure only the desktop app can create matches
-  - Validates `duration` (30–1800 seconds) and `maxPlayers` (2–16)
-  - Detects the local IP and constructs `serverUrl`, `wsUrl`, and `qrCodeData` using mDNS hostname (fallback to IP)
   - Only one match allowed at a time (returns 409 if match already exists)
   - INPUT: `{ serverToken, duration?, maxPlayers? }`
   - OUTPUT: `{ success, match }` (`match` includes `matchId`, `gamePin`, URLs, QR payload, etc.)
 
 - `POST /api/register` – Registers that a plane is online, but doesn't associate it with the current match yet
   - Called by the plane's ESP32 once it is on Wi‑Fi
-  - Registers/updates the plane in the in‑memory `planes` list
-  - Generates and stores a per‑session auth token for that `planeId` (used for future plane‑specific requests)
+  - Returns a per‑session auth token for that `planeId` (used for plane‑specific requests)
   - INPUT: `{ planeId, esp32Ip?, userId? }`
   - OUTPUT: `{ success, authToken, matchId }`
 
 - `POST /api/join-match` – Adds a plane to the current match's waiting room for a specific player
   - Called by the mobile app when a player hits the "join match" button
-  - Ensures the match is still in `waiting` state
-  - Ensures the requesting `userId` matches the one associated with the given `planeId`
-  - Enforces the `maxPlayers` limit
-  - Associates a `playerName` with that plane for the match and issues a player‑scoped auth token
+  - Assigns an auth token for the mobile app for the duration of the match
   - INPUT: `{ planeId, userId, playerName }`
   - OUTPUT: `{ success, authToken, matchId }`
 
 - `POST /api/hit` - Registers a hit during the match
   - Called by the ESP32s when a plane is shot by another plane
   - Only the ESP32s should make requests to this endpoint, as enforced by the auth token
-  - Validates `planeId` and `targetId` are associated with the current match and are not identical
-  - Adds a new "hit" `Event` to the match's `events` list
-  - Updates the `MatchPlane` for the target plane with the hit count
   - INPUT: `{ authToken, planeId, targetId }`
   - OUTPUT: `success`
 
 - `GET /api/planes` - List all online planes
-    - Returns a list of all online planes, including whether they have joined the
-      current match or not and their current score if the match is ongoing 
-    - Anyone can make a request to this endpoint. Sensitive info such as auth tokens is no longer stored with these planes and is therefore exlcuded.
+    - Returns a list of all online planes, including if they have joined the
+      current match and their current score if the match is ongoing 
+    - Anyone can make a request to this endpoint.
     - INPUT: none
-    - OUTPUT: `[{ planeId, userId?, playerName, score? }]`
+    - OUTPUT: `{ planes: [{ planeId, userId?, esp32Ip?, playerName?, registeredAt, hits, hitsTaken, isOnline, isJoined, isDisqualified }] }`
 
 ## Future Endpoints
 - `POST /api/start-match` - Begins an Aeroduel match
