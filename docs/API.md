@@ -225,16 +225,17 @@ at least 2 players joined so far.
 
 ### POST `/api/hit`
 
-ESP32 reports a hit event.
-
-## Planned Body and Responses
+ESP32 reports a hit event. Validates `planeId` and `targetId` are associated 
+with the current match and are not identical, adds a new "hit" `Event` to the 
+match's `events` list, and updates the `Plane` for the target plane with the new
+hit count. Can only be called by the ESP32s, as enforced by the auth token.
 
 **Request Body:**
 ```json
 {
+  "authToken": "some-authentication-token",
   "planeId": "uuid-of-this-plane",
-  "targetId": "uuid-of-hit-plane",
-  "timestamp": "2025-11-21T12:05:30Z"
+  "targetId": "uuid-of-hit-plane"
 }
 ```
 
@@ -418,18 +419,18 @@ Common HTTP status codes:
   - OUTPUT: `{ success, authToken, matchId }`
 
 - `POST /api/hit` - Registers a hit during the match
-  - Called by the ESP32s when a plane is shot by another plane.
-  - Only the ESP32s should make requests to this endpoint, as enforced by the auth token.
-  - Validates `planeId` and `targetId` are associated with the same match.
-  - Adds a new `Event` to the match's `events` list`
+  - Called by the ESP32s when a plane is shot by another plane
+  - Only the ESP32s should make requests to this endpoint, as enforced by the auth token
+  - Validates `planeId` and `targetId` are associated with the current match and are not identical
+  - Adds a new "hit" `Event` to the match's `events` list
   - Updates the `MatchPlane` for the target plane with the hit count
-  - INPUT: `{ authToken, planeId, targetId, timestamp }`
+  - INPUT: `{ authToken, planeId, targetId }`
   - OUTPUT: `success`
 
 - `GET /api/planes` - List all online planes
     - Returns a list of all online planes, including whether they have joined the
-      current match or not and, if the match is ongoing, their current score.
-    - Anyone can make a request to this endpoint. Sensitive info such as auth tokens is excluded
+      current match or not and their current score if the match is ongoing 
+    - Anyone can make a request to this endpoint. Sensitive info such as auth tokens is no longer stored with these planes and is therefore exlcuded.
     - INPUT: none
     - OUTPUT: `[{ planeId, userId?, playerName, score? }]`
 
