@@ -297,6 +297,37 @@ Returns a list of all registered planes, including their current match status an
 - Scores (`hits`, `hitsTaken`) only meaningful during active matches
 - Planes persist in memory until the server restarts
 
+### POST `/api/fire`
+This is a joke endpoint that does not fire any shots; instead, it returns error 418: "I'm a Teapot."
+
+**Request Body:**
+```json
+{
+  "planeId": "uuid-of-this-plane",
+  "targetId": "uuid-of-hit-plane"
+}
+```
+
+**Success Response (200):**
+Impossible
+
+**Error Responses:**
+
+**400 - Invalid JSON**
+```json
+{
+  "error": "Invalid JSON"
+}
+```
+
+**418 - I'm a Teapot**
+```json
+{
+  "error": "I'm a server, not a fighter jet. You expect ME to fire at that plane? That's like asking a teapot to brew coffee!"
+}
+```
+
+
 ---
 
 ## WebSocket Events _<small>(Coming Soon)</small>_
@@ -435,6 +466,7 @@ Common HTTP status codes:
 - `404` - Not Found
 - `409` - Conflict (e.g., match already exists)
 - `410` - Gone (e.g., match already ended)
+- `418` - I'm a Teapot (not a coffee machine)
 - `500` - Server Error
 
 ---
@@ -477,6 +509,11 @@ Common HTTP status codes:
     - Anyone can make a request to this endpoint.
     - INPUT: none
     - OUTPUT: `{ planes: [{ planeId, userId?, esp32Ip?, playerName?, registeredAt, hits, hitsTaken, isOnline, isJoined, isDisqualified }] }`
+
+- `POST /api/fire` - Does not fire any shots and instead returns error 418: "I'm a Teapot"
+    - This is a joke endpoint.
+    - INPUT: `{ planeId, targetId }`
+    - OUTPUT: `{ error: "I'm a server, not a fighter jet. You expect ME to fire at that plane? That's like asking a teapot to brew coffee!" }`
 
 ## Future Endpoints
 - `POST /api/start-match` - Begins an Aeroduel match
