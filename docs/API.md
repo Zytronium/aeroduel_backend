@@ -202,12 +202,10 @@ the one associated with the given `planeId` and enforces the `maxPlayers` limit.
 
 ---
 
-### POST `/api/start-match` _<small>(Coming Soon)</small>_
+### POST `/api/start-match`
 
 Begins the current match stored in memory if not started yet and if there are
 at least 2 players joined so far. 
-
-## Planned Body and Responses
 
 **Request Body:**
 ```json
@@ -220,11 +218,7 @@ at least 2 players joined so far.
 ```json
 {
   "success": true,
-  "match": {
-    "status": "active",
-    "startedAt": "2025-11-21T12:01:00Z",
-    "endsAt": "2025-11-21T12:08:00Z"
-  }
+  "endsAt": "2025-11-21T12:08:00Z"
 }
 ```
 
@@ -252,6 +246,8 @@ hit count. Can only be called by the ESP32s, as enforced by the auth token.
   "success": true
 }
 ```
+
+---
 
 ### GET `/api/planes`
 
@@ -296,6 +292,8 @@ Returns a list of all registered planes, including their current match status an
 - Sensitive data like auth tokens is excluded from response
 - Scores (`hits`, `hitsTaken`) only meaningful during active matches
 - Planes persist in memory until the server restarts
+
+---
 
 ### POST `/api/fire`
 This is a joke endpoint that does not fire any shots; instead, it returns error 418: "I'm a Teapot."
@@ -514,12 +512,11 @@ Common HTTP status codes:
     - INPUT: `{ planeId, targetId }`
     - OUTPUT: `{ error: "I'm a server, not a fighter jet. You expect ME to fire at that plane? That's like asking a teapot to brew coffee!" }`
 
-## Future Endpoints
 - `POST /api/start-match` - Begins an Aeroduel match
-  - Updates the match in memory to be active and sends WebSocket updates to ESP32s and mobile apps
-  - Only the sever's front-end can make requests to this endpoint, and this is enforced
-  - INPUT: `serverToken` 
-  - OUTPUT: `success, match`
+    - Updates the match in memory to be active and sends WebSocket updates to ESP32s and mobile apps
+    - Only the sever's front-end can make requests to this endpoint, and this is enforced
+    - INPUT: `{ serverToken }`
+    - OUTPUT: `{ success, endsAt }`
 
 ## Possible Additional Future Endpoints
 - `GET /api/match/:id` - Get match details
