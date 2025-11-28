@@ -353,15 +353,14 @@ const ws = new WebSocket('ws://aeroduel.local:45045');
 
 ### MatchState
 ```typescript
-{
+interface MatchState {
   matchId: string;
   gamePin: string;
   status: "waiting" | "active" | "ended";
   createdAt: Date;
-  matchType: "timed";
-  duration: number; // in seconds
-  registeredPlanes: RegisteredPlane[];
-  matchPlanes: Map<string, MatchPlane>;
+  matchType: "timed";    // future proof; may have multiple game modes in future
+  duration: number;      // match duration in seconds
+  matchPlanes: string[]; // planeIds of planes that have joined the match
   maxPlayers: number;
   serverUrl: string;
   wsUrl: string;
@@ -369,31 +368,33 @@ const ws = new WebSocket('ws://aeroduel.local:45045');
 }
 ```
 
-### RegisteredPlane
+### Plane
 ```typescript
-{
-  planeId: string;
+interface Plane {
+  /* Registration info */
   esp32Ip?: string;
-  playerName?: string;
+  planeId: string;
   userId: string;
+  playerName?: string;
   registeredAt: Date;
-}
-```
 
-### MatchPlane
-```typescript
-{
-  hits: number;
-  hitsTaken: number;
+  /* Match info */
+  hits?: number;
+  hitsTaken?: number;
+
+  /* Misc booleans */
+  isOnline: boolean;
+  isJoined: boolean;
+  isDisqualified: boolean;
 }
 ```
 
 ### Event
 ```typescript
-{
-  type: "hit";
+interface Event {
+  type: "join" | "leave" | "hit" | "disqualify";
   planeId: string;
-  targetId: string;
+  targetId?: string; // for hit events
   timestamp: Date;
 }
 ```
@@ -433,6 +434,7 @@ Common HTTP status codes:
 - `403` - Forbidden (Not authorized to perform this action from this device)
 - `404` - Not Found
 - `409` - Conflict (e.g., match already exists)
+- `410` - Gone (e.g., match already ended)
 - `500` - Server Error
 
 ---
