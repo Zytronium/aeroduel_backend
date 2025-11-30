@@ -321,6 +321,61 @@ Returns a list of all registered planes, including their current match status an
 
 ---
 
+### GET `/api/match`
+
+Returns the current match state including all match events, current status, 
+joined plane IDs, and more. Useful for debugging.
+
+**Authentication:** None required (public endpoint)
+
+**Request:** No parameters required
+
+**Success Response (200):**
+```json
+{
+  "matchId": "a1b2c3d4e5f6...",
+  "status": "waiting",
+  "createdAt": "2025-11-21T12:00:00Z",
+  "matchType": "timed",
+  "duration": 420,
+  "matchPlanes": [
+    "plane-id-1",
+    "plane-id-2"
+  ],
+  "maxPlayers": 2,
+  "serverUrl": "http://aeroduel.local:45045",
+  "wsUrl": "ws://aeroduel.local:45045",
+  "events": [
+    {
+      "type": "join",
+      "planeId": "plane-id-1",
+      "timestamp": "2025-11-21T12:01:00Z"
+    },
+    {
+      "type": "join",
+      "planeId": "plane-id-2",
+      "timestamp": "2025-11-21T12:02:00Z"
+    }
+  ]
+}
+```
+
+**Response Fields:**
+
+- `matchId` - Unique identifier for this match instance
+- `status` - Current match state: "waiting" (lobby), "active" (in progress),
+  or "ended"
+- `createdAt` - ISO timestamp when match was created
+- `matchType` - Type of game mode (currently only "timed" bu may support more in future)
+- `duration` - Match duration in seconds
+- `matchPlanes` - Array of planeIds that have joined this match
+- `maxPlayers` - Maximum number of players allowed to join
+- `serverUrl` - HTTP URL for API endpoints
+- `wsUrl` - WebSocket URL for real-time updates
+- `events` - Array of match events (joins, leaves, hits, etc.)
+
+---
+
 ### POST `/api/fire`
 This is a joke endpoint that does not fire any shots; instead, it returns error 418: "I'm a Teapot."
 
@@ -547,14 +602,19 @@ Common HTTP status codes:
     - INPUT: none
     - OUTPUT: `[{ planeId, userId?, esp32Ip?, playerName?, registeredAt, hits, hitsTaken, isOnline, isJoined, isDisqualified }]`
 
+- `GET /api/match` - Get current match state
+  - Returns the current match state including all match events, current status, joined plane IDs, and more.
+  - Anyone can make a request to this endpoint.
+  - INPUT: none
+  - OUTPUT: `{ matchId, status, createdAt, matchType, duration, maxPlayers, serverUrl, wsUrl, localIp, matchPlanes, events }`
+
 - `POST /api/fire` - Does not fire any shots and instead returns error 418: "I'm a Teapot"
     - This is a joke endpoint.
     - INPUT: `{ planeId, targetId }`
     - OUTPUT: `{ error: "I'm a server, not a fighter jet. You expect ME to fire at that plane? That's like asking a teapot to brew coffee!" }`
 
 ### Possible Additional Future Endpoints
-- `GET /api/match/:id` - Get match details
-- `DELETE /api/match/:id` - Cancel/end match
+- `DELETE /api/end-match` - Cancel/end match
 - `GET /api/match/:id/events` - Get match events such as hits
 
 ---

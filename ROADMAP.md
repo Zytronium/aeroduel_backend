@@ -80,8 +80,7 @@ seconds.
 ## Next steps
 
 - Fix bug where plane auth tokens stop working when a match waiting room is created (probably partly intentional; needs to tell the ESP32s the new auth token when a match begins.)
-- Fix bug where api/hit can be called while match state is "waiting"
-- Add API endpoint to get full match data for debug purposes
+- Fix bug where api/hit can be called while match state is "waiting" and when  plane has not jet joined
 - Add an endpoint for configuring a match if it hasn't started yet\*
 - Add an endpoint for force ending a match\*
 - Create a WebSocket server
