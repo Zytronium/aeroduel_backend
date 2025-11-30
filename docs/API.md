@@ -224,6 +224,32 @@ at least 2 players joined so far.
 
 ---
 
+### POST `/api/kick`
+
+Kicks or disqualifies a plane from the match. Can only be called by the Electron
+app, as enforced by the server token. If the current match's status is "waiting",
+it kicks the plane. If the current match's status is "active", it disqualifies it,
+which is the same thing as kicking it but makes a match event log of it. This 
+admin control can be useful to get rid of cheating players, faked planes from 
+hackers, disqualifying crashed planes, etc.
+
+**Request Body:**
+```json
+{
+  "planeId": "uuid-of-this-plane",
+  "serverToken": "some-server-token"
+}
+```
+
+**Success Response (200):**
+```json
+{
+  "success": true
+}
+```
+
+---
+
 ### POST `/api/hit`
 
 ESP32 reports a hit event. Validates `planeId` and `targetId` are associated 
@@ -476,7 +502,9 @@ Common HTTP status codes:
 
 ---
 
-## Current Endpoints
+## Endpoints: TLDR
+
+### Current Endpoints
 - `POST /api/new-match` – Creates a new Aeroduel match in waiting state
   - Only one match allowed at a time (returns 409 if match already exists)
   - INPUT: `{ serverToken, duration?, maxPlayers? }`
@@ -494,31 +522,37 @@ Common HTTP status codes:
   - INPUT: `{ planeId, userId, playerName }`
   - OUTPUT: `{ success, authToken, matchId }`
 
-- `POST /api/hit` - Registers a hit during the match
-  - Called by the ESP32s when a plane is shot by another plane
-  - Only the ESP32s should make requests to this endpoint, as enforced by the auth token
-  - INPUT: `{ authToken, planeId, targetId }`
-  - OUTPUT: `success`
-
-- `GET /api/planes` - List all online planes
-    - Returns a list of all online planes, including if they have joined the
-      current match and their current score if the match is ongoing 
-    - Anyone can make a request to this endpoint.
-    - INPUT: none
-    - OUTPUT: `{ planes: [{ planeId, userId?, esp32Ip?, playerName?, registeredAt, hits, hitsTaken, isOnline, isJoined, isDisqualified }] }`
-
-- `POST /api/fire` - Does not fire any shots and instead returns error 418: "I'm a Teapot"
-    - This is a joke endpoint.
-    - INPUT: `{ planeId, targetId }`
-    - OUTPUT: `{ error: "I'm a server, not a fighter jet. You expect ME to fire at that plane? That's like asking a teapot to brew coffee!" }`
-
 - `POST /api/start-match` - Begins an Aeroduel match
     - Updates the match in memory to be active and sends WebSocket updates to ESP32s and mobile apps
     - Only the sever's front-end can make requests to this endpoint, and this is enforced
     - INPUT: `{ serverToken }`
     - OUTPUT: `{ success, endsAt }`
 
-## Possible Additional Future Endpoints
+- `POST /api/kick` - Kicks or disqualifies a plane from the match
+  - Called by the server app when a player hits the "kick" or "disqualify" button either while waiting for players to join or during the match
+  - Only the server's front-end can make requests to this endpoint, and this is enforced
+  - INPUT: `{ planeId, serverToken }`
+  - OUTPUT: `{ success }`
+
+- `POST /api/hit` - Registers a hit during the match
+  - Called by the ESP32s when a plane is shot by another plane
+  - Only the ESP32s should make requests to this endpoint, as enforced by the auth token
+  - INPUT: `{ authToken, planeId, targetId }`
+  - OUTPUT: `{ success }`
+
+- `GET /api/planes` - List all online planes
+    - Returns a list of all online planes, including if they have joined the
+      current match and their current score if the match is ongoing 
+    - Anyone can make a request to this endpoint.
+    - INPUT: none
+    - OUTPUT: `[{ planeId, userId?, esp32Ip?, playerName?, registeredAt, hits, hitsTaken, isOnline, isJoined, isDisqualified }]`
+
+- `POST /api/fire` - Does not fire any shots and instead returns error 418: "I'm a Teapot"
+    - This is a joke endpoint.
+    - INPUT: `{ planeId, targetId }`
+    - OUTPUT: `{ error: "I'm a server, not a fighter jet. You expect ME to fire at that plane? That's like asking a teapot to brew coffee!" }`
+
+### Possible Additional Future Endpoints
 - `GET /api/match/:id` - Get match details
 - `DELETE /api/match/:id` - Cancel/end match
 - `GET /api/match/:id/events` - Get match events such as hits
@@ -534,4 +568,4 @@ Common HTTP status codes:
 ---
 
 **Documentation Created**: November 21, 2025  
-**Last Updated**: November 28, 2025
+**Last Updated**: November 29, 2025

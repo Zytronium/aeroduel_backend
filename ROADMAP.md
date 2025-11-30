@@ -80,7 +80,6 @@ seconds.
 ## Next steps
 
 - Add an endpoint for configuring a match if it hasn't started yet\*
-- Add an endpoint for starting a match
 - Add an endpoint for force ending a match\*
 - Create a WebSocket server
 - Add unit testing

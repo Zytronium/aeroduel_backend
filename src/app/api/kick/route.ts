@@ -53,9 +53,7 @@ export async function POST(req: Request) {
     kickPlayer(planeId, disqualified);
 
   return NextResponse.json({
-    success: true,
-    matchId: match.matchId,
-      disqualified,
+    success: true
   });
   } catch (error) {
     return NextResponse.json(
