@@ -33,6 +33,14 @@ export async function POST(req: Request) {
     );
   }
 
+  // ensure match status is active
+  if (match.status !== "active") {
+    return NextResponse.json(
+      { error: "Cannot register hits when the match is not active." },
+      { status: 409 }
+    )
+  }
+
   // get online planes
   const onlinePlanes = getOnlinePlanes();
 
