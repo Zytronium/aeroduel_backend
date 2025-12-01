@@ -558,9 +558,13 @@ Common HTTP status codes:
 ---
 
 ## Endpoints: TLDR
+Server-only endpoints: Only the server's front-end can make requests to this endpoint via Electron app, and this is enforced.  
+Mobile-only endpoints: Only the mobile app can make requests to this endpoint, and this is enforced. 
+Arduino-only endpoints: Only the ESP32s can make requests to this endpoint, and this is enforced.
 
 ### Current Endpoints
 - `POST /api/new-match` – Creates a new Aeroduel match in waiting state
+  - Server-only endpoint
   - Only one match allowed at a time (returns 409 if match already exists)
   - INPUT: `{ serverToken, duration?, maxPlayers? }`
   - OUTPUT: `{ success, match }` (`match` includes `matchId`, `gamePin`, URLs, QR payload, etc.)
@@ -570,50 +574,66 @@ Common HTTP status codes:
   - Returns a per‑session auth token for that `planeId` (used for plane‑specific requests)
   - INPUT: `{ planeId, esp32Ip?, userId? }`
   - OUTPUT: `{ success, authToken, matchId }`
+  - Note: Since this is the endpoint that assigns the auth token used in arduino-only endpoints, this is
+    not an arduino-only endpoint as that is impossible without a pre-existing auth token. It is a
+    chicken or egg problem. The solution to this security issue is that the user running the server
+    can kick or disconnect unknown "planes" from the system.
 
 - `POST /api/join-match` – Adds a plane to the current match's waiting room for a specific player
   - Called by the mobile app when a player hits the "join match" button
   - Assigns an auth token for the mobile app for the duration of the match
   - INPUT: `{ planeId, userId, playerName }`
   - OUTPUT: `{ success, authToken, matchId }`
+  - Note: Since this is the endpoint that assigns the auth token used in mobile-only endpoints, this is
+    not a mobile-only endpoint as that is impossible without a pre-existing auth token. It's yet again a
+    chicken or egg problem. The solution to this security issue is that the user running the server
+    can kick or disconnect unknown users from the match.
 
 - `POST /api/start-match` - Begins an Aeroduel match
-    - Updates the match in memory to be active and sends WebSocket updates to ESP32s and mobile apps
-    - Only the sever's front-end can make requests to this endpoint, and this is enforced
-    - INPUT: `{ serverToken }`
-    - OUTPUT: `{ success, endsAt }`
+  - Server-only endpoint
+  - Updates the match in memory to be active and sends WebSocket updates to ESP32s and mobile apps
+  - Only the sever's front-end can make requests to this endpoint, and this is enforced
+  - INPUT: `{ serverToken }`
+  - OUTPUT: `{ success, endsAt }`
 
 - `POST /api/kick` - Kicks or disqualifies a plane from the match
+  - Server-only endpoint
   - Called by the server app when a player hits the "kick" or "disqualify" button either while waiting for players to join or during the match
-  - Only the server's front-end can make requests to this endpoint, and this is enforced
   - INPUT: `{ planeId, serverToken }`
   - OUTPUT: `{ success }`
 
 - `POST /api/hit` - Registers a hit during the match
+  - Arduino-only endpoint
   - Called by the ESP32s when a plane is shot by another plane
   - Only the ESP32s should make requests to this endpoint, as enforced by the auth token
   - INPUT: `{ authToken, planeId, targetId }`
   - OUTPUT: `{ success }`
 
 - `GET /api/planes` - List all online planes
-    - Returns a list of all online planes, including if they have joined the
-      current match and their current score if the match is ongoing 
-    - Anyone can make a request to this endpoint.
-    - INPUT: none
-    - OUTPUT: `[{ planeId, userId?, esp32Ip?, playerName?, registeredAt, hits, hitsTaken, isOnline, isJoined, isDisqualified }]`
+  - Public endpoint
+  - Returns a list of all online planes, including if they have joined the
+    current match and their current score if the match is ongoing 
+  - Anyone can make a request to this endpoint.
+  - INPUT: none
+  - OUTPUT: `[{ planeId, userId?, esp32Ip?, playerName?, registeredAt, hits, hitsTaken, isOnline, isJoined, isDisqualified }]`
 
 - `GET /api/match` - Get current match state
+  - Public endpoint
   - Returns the current match state including all match events, current status, joined plane IDs, and more.
   - Anyone can make a request to this endpoint.
   - INPUT: none
   - OUTPUT: `{ matchId, status, createdAt, matchType, duration, maxPlayers, serverUrl, wsUrl, localIp, matchPlanes, events }`
 
 - `POST /api/fire` - Does not fire any shots and instead returns error 418: "I'm a Teapot"
-    - This is a joke endpoint.
-    - INPUT: `{ planeId, targetId }`
-    - OUTPUT: `{ error: "I'm a server, not a fighter jet. You expect ME to fire at that plane? That's like asking a teapot to brew coffee!" }`
+  - Public endpoint
+  - This is a joke endpoint.
+  - INPUT: `{ planeId, targetId }`
+  - OUTPUT: `{ error: "I'm a server, not a fighter jet. You expect ME to fire at that plane? That's like asking a teapot to brew coffee!" }`
 
 ### Possible Additional Future Endpoints
+- `POST /api/sign-in` - registers that a user is online and issues a mobile-only auth token
+- `POST /api/sign-out` - registers that a user is offline and revokes the mobile-only auth token (mobile-only endpoint)
+- `POST /api/blacklist` - blacklist a userId or planeId from joining matches until the server restarts (server-only endpoint)
 - `DELETE /api/end-match` - Cancel/end match
 - `GET /api/match/:id/events` - Get match events such as hits
 
@@ -628,4 +648,4 @@ Common HTTP status codes:
 ---
 
 **Documentation Created**: November 21, 2025  
-**Last Updated**: November 29, 2025
+**Last Updated**: December 1, 2025
