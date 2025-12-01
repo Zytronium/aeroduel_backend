@@ -81,12 +81,11 @@ export function updateCurrentMatch(
   const previousMatch = currentMatch;
   currentMatch = updater(currentMatch);
 
-  // If match ended or a new match started, clear all stored auth tokens
+  // If match ended or a new match started, clear stored user auth tokens
   if (
     (!currentMatch && previousMatch) ||
     (currentMatch && previousMatch && currentMatch.matchId !== previousMatch.matchId)
   ) {
-    planeAuthTokens.clear();
     userAuthTokens.clear();
   }
 
