@@ -126,6 +126,7 @@ Besides the fact that the application is incomplete, there are a few known issue
   This may affect the mobile app's ability to work on some devices. We are unsure if this is something we can fix on our end.
   - Possible workaround we can implement: Buy aeroduel.com (or similar) and send the game PIN to an API running on it. 
     This would also allow for players to not need to be on the same wifi network anymore. 
+- Server seems to shut down after some time when running in Electron.
 
 ## Project Structure
 
