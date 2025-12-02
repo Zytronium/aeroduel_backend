@@ -3,6 +3,7 @@
 import { NextResponse } from "next/server";
 import { MatchState } from '@/types';
 import { getCurrentMatch, updateCurrentMatch } from '@/lib/match-state';
+import { broadcastMatchUpdate } from "@/lib/websocket";
 
 export async function POST(req: Request) {
   let data;
@@ -18,7 +19,7 @@ export async function POST(req: Request) {
 
   // TODO:
   //  - send websocket update to clients to say the match has begun
-  //  - start a timer to end the match after the specified duration (note: this may be difficult as we can't run code after returning a response.. .can we?)
+  //  - start a timer to end the match after the specified duration (note: this may be difficult as we can't run code after returning a response... can we?)
 
   const { serverToken } = data;
 
@@ -57,6 +58,9 @@ export async function POST(req: Request) {
     wsUrl: currentMatch!.wsUrl,
     events: currentMatch!.events
   }));
+
+  // Notify all connected mobiles about the new match status/scores
+  broadcastMatchUpdate();
 
   return NextResponse.json({
     success: true,
