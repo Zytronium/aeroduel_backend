@@ -6,7 +6,7 @@ Zytronium's daily agenda for progress on Aeroduel
 
 ### Base Goals
 - [X] Implement a mobile API simulator just like the arduino simulator
-- [ ] Fix API bugs
+- [X] Fix API bugs
 - [ ] Add WebSockets for mobile implementation
 
 ### Stretch Goals
