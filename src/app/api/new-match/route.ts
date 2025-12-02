@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import { MatchState } from '@/types';
 import { getCurrentMatch, updateCurrentMatch } from '@/lib/match-state';
 import { generateMatchId, getLocalIpAddress } from "@/lib/utils";
+import { getWebSocketUrl } from "@/lib/websocket";
 
 export async function POST(req: Request) {
   let data;
@@ -73,7 +74,7 @@ export async function POST(req: Request) {
   const serverHost = mdnsName || localIp;
 
   const serverUrl = `http://${serverHost}:${port}`;
-  const wsUrl = `ws://${serverHost}:${port}`;
+  const wsUrl = getWebSocketUrl(serverHost);
 
   // Create new match
   const matchId = generateMatchId();

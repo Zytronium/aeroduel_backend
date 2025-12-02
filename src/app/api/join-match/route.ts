@@ -84,5 +84,6 @@ export async function POST(req: Request) {
     success: true,
     authToken: authToken,
     matchId: match.matchId,
+    wsUrl: match.wsUrl,
   });
 }

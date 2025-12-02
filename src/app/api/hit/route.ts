@@ -4,6 +4,7 @@ import {
   registerHit,
   validatePlaneAuthToken
 } from "@/lib/match-state";
+import { broadcastMatchUpdate, broadcastPlaneHit } from "@/lib/websocket";
 
 export async function POST(req: Request) {
   let data;
@@ -73,6 +74,10 @@ export async function POST(req: Request) {
 
   registerHit(planeId, targetId, timestamp);
   console.log(`Plane ${plane.playerName} hit plane ${targetPlane.playerName} at ${timestamp}`);
+
+  // Notify clients about the hit and new scores
+  broadcastPlaneHit(planeId, targetId, timestamp);
+  broadcastMatchUpdate();
 
   return NextResponse.json({ success: true });
 }

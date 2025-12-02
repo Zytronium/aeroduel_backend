@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getCurrentMatch, getJoinedPlanes, updateCurrentMatch } from "@/lib/match-state";
 import type { Plane } from "@/types";
+import { broadcastMatchEnd } from "@/lib/websocket";
 
 interface MatchScore {
   planeId: string;
@@ -121,6 +122,9 @@ export async function POST(req: Request) {
       events: current.events ?? [],
     };
   });
+
+  // Notify clients about final scores
+  broadcastMatchEnd(resultsPayload);
 
   return NextResponse.json({
     success: true,
