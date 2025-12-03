@@ -44,6 +44,7 @@ export default function Home() {
     try {
       // Await the token generation
       const token = await getServerToken();
+      alert(token);
 
       const response = await fetch("/api/new-match", {
         method: "POST",

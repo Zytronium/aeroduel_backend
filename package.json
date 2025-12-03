@@ -1,12 +1,13 @@
 {
-  "name": "aeroduel_backend",
-  "version": "0.1.0",
+  "name": "aeroduel_server",
+  "version": "0.2.0",
   "main": "electron/main.js",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "e-build": "next build; npx electron-builder",
+    "dev-build": "cross-env DEV=true electron .",
     "start": "next start",
     "lint": "eslint"
   },
@@ -30,10 +31,11 @@
     "eslint": "^9",
     "eslint-config-next": "16.0.3",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "cross-env": "^7.0.3"
   },
   "build": {
-    "appId": "dev.zytronium.aeroduel-server",
+    "appId": "com.aeroduel.server",
     "files": [
       "electron/**/*",
       "package.json",

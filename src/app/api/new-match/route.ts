@@ -20,6 +20,8 @@ export async function POST(req: Request) {
 
   // Validate server token
   if (data.serverToken !== process.env.SERVER_TOKEN) {
+    console.log("Invalid server token:", data.serverToken);
+    console.log("Expected:", process.env.SERVER_TOKEN);
     return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
   }
 
