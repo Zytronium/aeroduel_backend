@@ -8,15 +8,17 @@ const net = require("net");
 const fs = require("fs");
 const os = require("os");
 
-// Generate the server token.
+// Generate or reuse the server token.
 /*
 * The server token is an authentication code that only the server and the Electron desktop app know.
 * This allows the app to verify an API request came directly from the Electron app and not from an
 * external device.
 */
-const serverToken = crypto.randomBytes(32).toString("hex");
+const existingToken = process.env.SERVER_TOKEN;
+const serverToken = existingToken || crypto.randomBytes(32).toString("hex");
+const isDev = process.env.DEV === "true" || process.env.DEV === "1";
 
-// Share the server token with the Next.js Server (API routes)
+// Share the server token with the Next.js Server (API routes) when we spawn it
 // This makes process.env.SERVER_TOKEN available to all API endpoints
 process.env.SERVER_TOKEN = serverToken;
 
@@ -54,6 +56,7 @@ function getLocalIp() {
 async function createWindow() {
     const port = process.env.PORT || 45045;
     const isDev = !app.isPackaged;
+    const isDevBuild = process.env.DEV === "true" || process.env.DEV === "1";
 
     const iconPath = isDev
         ? path.join(__dirname, "..", "public", "logo.png")
@@ -72,6 +75,21 @@ async function createWindow() {
     // Only open dev tools in development mode
     if (isDev) {
         win.webContents.openDevTools({ mode: "detach" });
+    }
+
+    const localIp = getLocalIp();
+    console.log("Detected local IPv4:", localIp || "none");
+
+    // In DEV build, do NOT spawn the standalone server; instead point to an already-running dev server.
+    if (isDevBuild) {
+        console.log(
+            `DEV build detected (DEV=true). Using external Next dev server at http://0.0.0.0:3000`,
+        );
+        win.loadURL(`http://0.0.0.0:3000`);
+
+        // Optionally still publish mDNS for dev
+        publishMDNS(localIp, port, true);
+        return;
     }
 
     const runtimeNode = isDev ? "node" : process.execPath;
@@ -98,9 +116,6 @@ async function createWindow() {
         win.loadURL("data:text/html,<h1>Server not found!</h1>");
         return;
     }
-
-    const localIp = getLocalIp();
-    console.log("Detected local IPv4:", localIp || "none");
 
     // Spawn Next.js standalone server bound to 0.0.0.0 (all interfaces)
     serverProcess = spawn(runtimeNode, [serverPath], {
@@ -215,6 +230,10 @@ app.whenReady().then(() => {
     // Allow the renderer to ask for the token
     ipcMain.handle("get-server-token", () => {
         return serverToken;
+    });
+    // Allow the renderer to check if in dev mode
+    ipcMain.handle("is-dev", () => {
+        return isDev;
     });
 
     createWindow();
