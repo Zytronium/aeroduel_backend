@@ -177,8 +177,8 @@ export default function Home() {
           className={`relative transition-all ${!loading ? 'hover:brightness-110 hover:scale-105 cursor-pointer' : ''}`}
         >
           <Image
-            src={loading ? "/starting-btn.svg" : "/start-match-btn.svg"}
-            alt={loading ? "Starting..." : "Start Match"}
+            src={loading ? "/starting-btn.svg" : "/new-match-btn.svg"}
+            alt={loading ? "Creating new match..." : "New Match"}
             width={444}
             height={102}
             className={loading ? "opacity-60 backdrop-blur-sm" : ""}
