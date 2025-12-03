@@ -4,8 +4,11 @@ import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import getServerToken from "@/app/getAuth";
 import type { Plane, MatchState, Event } from "@/types";
+import { useRouter } from "next/navigation";
 
 export default function MatchPage() {
+  const router = useRouter();
+
   const [duration, setDuration] = useState(420);
   const [maxPlayers, setMaxPlayers] = useState(2);
 
@@ -125,6 +128,7 @@ export default function MatchPage() {
         alert("An unknown error occurred while ending the match.");
       } else if (data.success === true || data.success === "true") {
         alert("Match ended.");
+        router.push("/");
       }
 
       console.log("End match response:", JSON.stringify(data));
