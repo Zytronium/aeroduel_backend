@@ -4,27 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import getServerToken from "@/app/getAuth";
 import { useRouter } from "next/navigation";
-
-interface Plane {
-  planeId: string;
-  userId: string;
-  esp32Ip?: string;
-  playerName?: string;
-  registeredAt: string;
-  hits?: number;
-  hitsTaken?: number;
-  isOnline: boolean;
-  isJoined: boolean;
-  isDisqualified: boolean;
-}
-
-interface MatchState {
-  matchId: string;
-  status: "waiting" | "active" | "ended";
-  matchType: "timed";
-  duration: number;
-  maxPlayers: number;
-}
+import { Plane, MatchState } from "@/types";
 
 export default function LobbyPage() {
   const router = useRouter();
@@ -138,13 +118,11 @@ export default function LobbyPage() {
       } else if (!response.ok) {
         alert("An unknown error occurred");
       } else if (data.success === true || data.success === "true") {
-        alert("Match started!");
-        // In the future we can navigate to /match here
+        router.push("/match");
       }
 
       console.log("Start match response:", JSON.stringify(data));
       setStarting(false);
-      await router.push("/match");
     } catch (err) {
       console.error(err);
       setStarting(false);

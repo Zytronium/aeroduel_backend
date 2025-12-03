@@ -128,6 +128,7 @@ export default function MatchPage() {
         alert("An unknown error occurred while ending the match.");
       } else if (data.success === true || data.success === "true") {
         alert("Match ended.");
+        // todo: display final results. Perhaps make a new page for this.
         router.push("/");
       }
 

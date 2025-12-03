@@ -61,6 +61,7 @@ export default function Home() {
 
       const data = await response.json();
 
+      setLoading(false);
       if (response.status === 403) {
         alert("You are not authorized to start a match from here. Try again in the app.");
       } else if (response.status === 409) {
@@ -70,11 +71,10 @@ export default function Home() {
       } else if (response.status === 200) {
         router.push('/lobby');
       } else if (data.success === true || data.success === "true") {
-        alert("Match open. Waiting on players to join...");
+        // alert("Match open. Waiting on players to join...");
       }
 
       console.log("Response: " + JSON.stringify(data));
-      setLoading(false);
     } catch (err) {
       console.error(err);
       setLoading(false);
