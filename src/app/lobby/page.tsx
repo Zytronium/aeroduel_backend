@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import getServerToken from "@/app/getAuth";
+import { useRouter } from "next/navigation";
 
 interface Plane {
   planeId: string;
@@ -26,6 +27,8 @@ interface MatchState {
 }
 
 export default function LobbyPage() {
+  const router = useRouter();
+
   const [loading, setLoading] = useState(false);
   const [starting, setStarting] = useState(false);
 
@@ -140,14 +143,13 @@ export default function LobbyPage() {
       }
 
       console.log("Start match response:", JSON.stringify(data));
+      setStarting(false);
+      await router.push("/match");
     } catch (err) {
       console.error(err);
+      setStarting(false);
       alert("An unknown error occurred");
     }
-
-    timeoutRef.current = window.setTimeout(() => {
-      setStarting(false);
-    }, 1500);
   }
 
   useEffect(() => {

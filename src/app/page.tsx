@@ -74,14 +74,12 @@ export default function Home() {
       }
 
       console.log("Response: " + JSON.stringify(data));
+      setLoading(false);
     } catch (err) {
       console.error(err);
+      setLoading(false);
       alert("An unknown error occurred");
     }
-
-    timeoutRef.current = window.setTimeout(() => {
-      setLoading(false);
-    }, 1500);
   }
 
   useEffect(() => {
