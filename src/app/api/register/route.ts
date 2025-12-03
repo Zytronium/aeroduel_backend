@@ -52,10 +52,8 @@ export async function POST(req: Request) {
     );
   }
 
-  // If a match exists, associate this plane's auth token with that match
-  if (match) {
-    setPlaneAuthToken(getSessionId(), planeId, authToken);
-  }
+  // Associate this plane's auth token with that match
+  setPlaneAuthToken(getSessionId(), planeId, authToken);
 
   return NextResponse.json({
     success: true,
