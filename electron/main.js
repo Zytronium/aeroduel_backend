@@ -4,7 +4,6 @@ const { app, BrowserWindow, ipcMain } = require("electron"); // Ensure ipcMain i
 const path = require("path");
 const crypto = require("crypto");
 const { spawn } = require("child_process");
-const net = require("net");
 const fs = require("fs");
 const os = require("os");
 
@@ -63,8 +62,8 @@ async function createWindow() {
         : path.join(process.resourcesPath, "standalone", "public", "logo.png");
 
     win = new BrowserWindow({
-        width: 1200,
-        height: 900,
+        width: 1280,
+        height: 800,
         icon: iconPath,
         webPreferences: {
             preload: path.join(__dirname, "preload.js"),

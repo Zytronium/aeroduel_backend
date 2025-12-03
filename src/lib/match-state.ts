@@ -169,8 +169,8 @@ export function registerPlane(planeData: Plane): boolean {
 }
 
 // Store/overwrite the auth token for a given plane in a given match
-export function setPlaneAuthToken(matchId: string, planeId: string, authToken: string): void {
-  const key = `${matchId}:${planeId}`;
+export function setPlaneAuthToken(sessionId: string, planeId: string, authToken: string): void {
+  const key = `${sessionId}:${planeId}`;
   planeAuthTokens.set(key, authToken);
 }
 

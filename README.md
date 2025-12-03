@@ -131,6 +131,9 @@ Besides the fact that the application is incomplete, there are a few known issue
     aeroduel.local:45045/api/hit:1
     Failed to load resource: net::ERR_NAME_NOT_RESOLVED
     ```
+- Match state does not reset when a new match is created
+- Plane icons in background stretch as page gets taller due to increased event logs in the ongoing match page.
+- Matches can start with fewer than two players joined
 
 ## Project Structure
 
