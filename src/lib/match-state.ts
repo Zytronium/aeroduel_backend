@@ -1,13 +1,15 @@
-import { MatchState, Plane } from "@/types";
+import type { MatchState, Plane, Event } from "@/types";
 import { generateAuthToken, generateMatchId } from "@/lib/utils";
 
 let sessionId = generateMatchId(); // TODO: change this every time a match ENDS in order to invalidate all plane auth tokens after each match
 let currentMatch: MatchState | null = null;
 export const planes: Plane[] = [];
 
-// In-memory auth token store, scoped by matchId + planeId
 const planeAuthTokens = new Map<string, string>();
 const userAuthTokens = new Map<string, string>();
+
+// Track disconnect-grace timers per plane
+const planeDisconnectTimers = new Map<string, NodeJS.Timeout>();
 
 // Return current session ID
 export function getSessionId() {
@@ -27,12 +29,11 @@ export function getOnlinePlanes() {
 
 // Return list of planes that have joined the match
 export function getJoinedPlanes(): Plane[] {
-  if (!currentMatch)
-    return [];
-
+  if (!currentMatch) return [];
   return planes.filter(plane => plane.isJoined);
 }
-// Kicks a player's plane from the match.
+
+// Kicks a player's plane from the match
 export function kickPlayer(planeId: string, disqualified: boolean = false) {
   if (!currentMatch)
     throw new Error("Cannot kick player from non-existent match");
@@ -57,12 +58,8 @@ export function kickPlayer(planeId: string, disqualified: boolean = false) {
   updateCurrentMatch(match => {
     if (!match) return match;
     const updatedPlanes = match.matchPlanes.filter(id => id !== planeId);
-    return {
-      ...match,
-      matchPlanes: updatedPlanes
-    };
+    return { ...match, matchPlanes: updatedPlanes };
   });
-
 }
 
 // Return current match state
@@ -81,7 +78,6 @@ export function updateCurrentMatch(
   const previousMatch = currentMatch;
   currentMatch = updater(currentMatch);
 
-  // If match ended or a new match started, clear stored user auth tokens
   if (
     (!currentMatch && previousMatch) ||
     (currentMatch && previousMatch && currentMatch.matchId !== previousMatch.matchId)
@@ -94,26 +90,18 @@ export function updateCurrentMatch(
 
 export function registerHit(planeId: string, targetId: string, timestamp: Date): boolean {
   try {
-    // If no current match exists, exit
-    if (!currentMatch)
-      return false;
+    if (!currentMatch) return false;
 
-    // get attacker plane. If plane does not exist, exit
     const attacker = getPlaneById(planeId);
-    if (!attacker)
-      return false;
+    if (!attacker) return false;
 
-    // get target plane. If plane does not exist, exit
     const target = getPlaneById(targetId);
-    if (!target)
-      return false;
+    if (!target) return false;
 
-    // Create an empty events array if it doesn't exist yet
     if (!currentMatch.events) {
       currentMatch.events = [];
     }
 
-    // Record hit event
     currentMatch.events.push({
       type: "hit",
       planeId,
@@ -174,7 +162,6 @@ export function setPlaneAuthToken(sessionId: string, planeId: string, authToken:
   planeAuthTokens.set(key, authToken);
 }
 
-// Validate that the provided auth token matches what we stored
 export function validatePlaneAuthToken(
   sessionId: string,
   planeId: string,
@@ -190,7 +177,6 @@ export function setUserAuthToken(matchId: string, userId: string, authToken: str
   userAuthTokens.set(key, authToken);
 }
 
-// Validate that the provided auth token matches what we stored
 export function validateUserAuthToken(
   matchId: string,
   userId: string,
@@ -201,14 +187,10 @@ export function validateUserAuthToken(
 }
 
 export function joinPlaneToMatch(planeId: string, playerName: string): boolean {
-  if (!currentMatch)
-    return false;
+  if (!currentMatch) return false;
 
   const planeIndex = planes.findIndex(p => p.planeId === planeId);
-
-  // Plane must be registered first (via /api/register)
-  if (planeIndex === -1)
-    return false;
+  if (planeIndex === -1) return false;
 
   const plane = planes[planeIndex];
 
@@ -231,7 +213,94 @@ export function joinPlaneToMatch(planeId: string, playerName: string): boolean {
     timestamp: new Date(),
   });
 
-  // Trigger WebSocket update here in the future
-
   return true;
+}
+
+/**
+ * Mark a plane as online in memory.
+ * Called when its WebSocket "hello" handshake succeeds.
+ */
+export function markPlaneOnline(planeId: string): void {
+  const plane = getPlaneById(planeId);
+  if (!plane) {
+    console.warn(`[match-state] markPlaneOnline: plane not found: ${planeId}`);
+    return;
+  }
+
+  plane.isOnline = true;
+}
+
+/**
+ * Mark a plane as offline in memory and log it.
+ * Called immediately when the WebSocket connection closes/errors.
+ */
+export function markPlaneOffline(planeId: string): void {
+  const plane = getPlaneById(planeId);
+  if (!plane) {
+    console.warn(`[match-state] markPlaneOffline: plane not found: ${planeId}`);
+    return;
+  }
+  plane.isOnline = false;
+  console.log(`[match-state] Plane ${planeId} went offline (WebSocket closed).`);
+}
+
+/**
+ * Schedule a check after a grace period. If the plane is still offline and
+ * in an active match, automatically disqualify it.
+ */
+export function schedulePlaneDisconnectCheck(planeId: string, delayMs: number): void {
+  if (planeDisconnectTimers.has(planeId)) {
+    clearTimeout(planeDisconnectTimers.get(planeId)!);
+  }
+
+  const timeout = setTimeout(() => {
+    planeDisconnectTimers.delete(planeId);
+    tryAutoDisqualifyAfterDisconnect(planeId);
+  }, delayMs);
+
+  planeDisconnectTimers.set(planeId, timeout);
+}
+
+/**
+ * Cancel any pending disconnect timer for this plane.
+ * Called when the plane successfully reconnects via WebSocket.
+ */
+export function cancelPlaneDisconnectTimer(planeId: string): void {
+  const existing = planeDisconnectTimers.get(planeId);
+  if (existing) {
+    clearTimeout(existing);
+    planeDisconnectTimers.delete(planeId);
+  }
+}
+
+/**
+ * Internal helper: if a plane is still offline after the grace period and the
+ * match is active, disqualify it and add a "disqualify" event.
+ */
+function tryAutoDisqualifyAfterDisconnect(planeId: string): void {
+  const match = getCurrentMatch();
+  if (!match || match.status !== "active") return;
+
+  const plane = getPlaneById(planeId);
+  if (!plane || plane.isOnline || !plane.isJoined || plane.isDisqualified) return;
+
+  console.log(`[match-state] Auto-disqualifying plane ${planeId} after disconnect grace period.`);
+  plane.isDisqualified = true;
+
+  // Record event in match.events
+  updateCurrentMatch((current) => {
+    if (!current) return current;
+    const events = current.events ? [...current.events] : [];
+    const disqualifyEvent: Event = {
+      type: "disqualify",
+      planeId,
+      timestamp: new Date(),
+    };
+    events.push(disqualifyEvent);
+    return { ...current, events };
+  });
+}
+
+export function findPlaneById(planeId: string): Plane | undefined {
+  return planes.find((p) => p.planeId === planeId);
 }

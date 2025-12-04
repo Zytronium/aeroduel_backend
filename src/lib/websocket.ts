@@ -5,6 +5,10 @@ import {
   getSessionId,
   validatePlaneAuthToken,
   validateUserAuthToken,
+  markPlaneOnline,
+  markPlaneOffline,
+  schedulePlaneDisconnectCheck,
+  cancelPlaneDisconnectTimer,
 } from "@/lib/match-state";
 
 export type WSClientRole = "mobile" | "arduino";
@@ -19,68 +23,89 @@ interface TrackedClient {
 
 type HelloMessage =
   | {
-  type: "hello";
-  role: "mobile";
-  matchId: string;
-  userId: string;
-  authToken: string;
-}
+      type: "hello";
+      role: "mobile";
+      matchId: string;
+      userId: string;
+      authToken: string;
+    }
   | {
-  type: "hello";
-  role: "arduino";
-  planeId: string;
-  authToken: string;
-};
+      type: "hello";
+      role: "arduino";
+      planeId: string;
+      authToken: string;
+    };
 
 type OutgoingMessage =
   | {
-  type: "match:update";
-  data: {
-    status: "waiting" | "active" | "ended";
-    timeRemaining?: number | null;
-    scores: Array<{
-      planeId: string;
-      playerName?: string;
-      hits: number;
-      hitsTaken: number;
-      isDisqualified: boolean;
-    }>;
-  };
-}
+      type: "match:update";
+      data: {
+        status: "waiting" | "active" | "ended";
+        timeRemaining?: number | null;
+        scores: Array<{
+          planeId: string;
+          playerName?: string;
+          hits: number;
+          hitsTaken: number;
+          isDisqualified: boolean;
+        }>;
+      };
+    }
   | {
-  type: "plane:hit";
-  data: {
-    planeId: string;
-    targetId: string;
-    timestamp: string;
-  };
-}
+      type: "plane:hit";
+      data: {
+        planeId: string;
+        targetId: string;
+        timestamp: string;
+      };
+    }
   | {
-  type: "match:end";
-  data: {
-    winners: string[];
-    scores: Array<{
-      planeId: string;
-      playerName?: string;
-      hits: number;
-      hitsTaken: number;
-      isDisqualified: boolean;
-    }>;
-  };
-}
+      type: "match:end";
+      data: {
+        winners: string[];
+        scores: Array<{
+          planeId: string;
+          playerName?: string;
+          hits: number;
+          hitsTaken: number;
+          isDisqualified: boolean;
+        }>;
+      };
+    }
   | {
-  type: "system:ack";
-  data: {
-    role: WSClientRole;
-    userId?: string;
-    planeId?: string;
-    matchId?: string;
-  };
-}
+      type: "system:ack";
+      data: {
+        role: WSClientRole;
+        userId?: string;
+        planeId?: string;
+        matchId?: string;
+      };
+    }
   | {
-  type: "system:error";
-  error: string;
-};
+      type: "system:error";
+      error: string;
+    }
+  | {
+      type: "plane:flash";
+      data: {
+        planeId: string;
+        byPlaneId: string;
+        timestamp: string;
+      };
+    }
+  | {
+      type: "match:state";
+      data: {
+        status: "waiting" | "active" | "ended";
+      };
+    }
+  | {
+      type: "plane:kicked" | "plane:disqualified";
+      data: {
+        planeId: string;
+        reason: "kick" | "disconnect" | "manual";
+      };
+    };
 
 // WebSocket port: default to PORT + 1 so we don't collide with HTTP server
 export const WS_PORT = Number(
@@ -193,6 +218,15 @@ function ensureWebSocketServer(): WebSocketServer {
         };
         clients.add(tracked);
 
+        // Mark plane online and cancel any pending disconnect timer
+        try {
+          markPlaneOnline(msg.planeId);
+          cancelPlaneDisconnectTimer(msg.planeId);
+        } catch (e) {
+          // Non-fatal; keep WS connection alive
+          console.error("[ws] Failed to mark plane online:", e);
+        }
+
         safeSend(ws, {
           type: "system:ack",
           data: {
@@ -206,6 +240,16 @@ function ensureWebSocketServer(): WebSocketServer {
     ws.on("close", () => {
       if (tracked) {
         clients.delete(tracked);
+
+        if (tracked.role === "arduino" && tracked.planeId) {
+          try {
+            // Immediately mark offline and schedule grace-period check
+            markPlaneOffline(tracked.planeId);
+            schedulePlaneDisconnectCheck(tracked.planeId, 20_000);
+          } catch (e) {
+            console.error("[ws] Error handling arduino disconnect:", e);
+          }
+        }
       }
       clearTimeout(helloTimeout);
     });
@@ -213,6 +257,15 @@ function ensureWebSocketServer(): WebSocketServer {
     ws.on("error", () => {
       if (tracked) {
         clients.delete(tracked);
+
+        if (tracked.role === "arduino" && tracked.planeId) {
+          try {
+            markPlaneOffline(tracked.planeId);
+            schedulePlaneDisconnectCheck(tracked.planeId, 20_000);
+          } catch (e) {
+            console.error("[ws] Error handling arduino error/disconnect:", e);
+          }
+        }
       }
       clearTimeout(helloTimeout);
     });
@@ -261,6 +314,8 @@ function broadcast(
     safeSend(client.ws, message);
   }
 }
+
+// ... existing code ...
 
 /**
  * Helper for /api/new-match to build wsUrl given a hostname.
@@ -373,15 +428,68 @@ export function broadcastMatchEnd(results: {
  */
 export function sendToPlane(
   planeId: string,
-  message: Omit<OutgoingMessage, "type"> & { type: string },
+  message: OutgoingMessage,
 ): void {
   ensureWebSocketServer();
 
   for (const client of clients) {
     if (client.role === "arduino" && client.planeId === planeId) {
-      safeSend(client.ws, message as OutgoingMessage);
+      safeSend(client.ws, message);
     }
   }
+}
+
+/**
+ * Tell a specific plane to flash its lights because it was hit.
+ */
+export function sendFlashCommandToPlane(
+  targetId: string,
+  byPlaneId: string,
+  ts: Date,
+): void {
+  sendToPlane(targetId, {
+    type: "plane:flash",
+    data: {
+      planeId: targetId,
+      byPlaneId,
+      timestamp: ts.toISOString(),
+    },
+  });
+}
+
+/**
+ * Broadcast match state (waiting/active/ended) to all connected planes.
+ * ESP32s use this to know when they should or should not report hits.
+ */
+export function broadcastMatchStateToPlanes(
+  status: "waiting" | "active" | "ended",
+): void {
+  ensureWebSocketServer();
+
+  broadcast(
+    (c) => c.role === "arduino",
+    {
+      type: "match:state",
+      data: { status },
+    },
+  );
+}
+
+/**
+ * Notify a single plane that it has been kicked or disqualified.
+ */
+export function notifyPlaneKickedOrDisqualified(
+  planeId: string,
+  kind: "plane:kicked" | "plane:disqualified",
+  reason: "kick" | "disconnect" | "manual",
+): void {
+  sendToPlane(planeId, {
+    type: kind,
+    data: {
+      planeId,
+      reason,
+    },
+  });
 }
 
 /**
