@@ -17,6 +17,8 @@
 
 ---
 
+Note: [Click Here](#prerequisites) to skip to prerequisites and installation.
+
 ## About The Project
 
 **Aeroduel Server** is a desktop application that acts as a local match server. It allows users to host Aeroduel matches
@@ -28,7 +30,7 @@ live scores, and more.
 
 ### How it Works
 
-1. **Host:** One user runs this desktop app. Simply click "Start Match" to start a match on the local server.
+1. **Host:** One user runs this desktop app. Simply click "New Match" to create a match on the local server.
 2. **Connect:** Players connect their phones to the same WiFi network the computer is on. This can be a standard Wi-Fi
    network or a mobile hotspot.
 3. **Play:** Players scan a QR code or enter a Game PIN to register their plan for the dogfight match.
@@ -45,12 +47,15 @@ live scores, and more.
 
 ### Prerequisites
 
-* Node.js (v22 or higher recommended)
-* npm
-* Bonjour (or an equivalent mDNS responder) if running on Windows
-* Avahi (or an equivalent mDNS responder) if running on Linux (if not already installed by default)
+* npm\*
+* Node.js\* (v22 or higher recommended) (included with npm)
+* Bonjour (or an equivalent mDNS responder) if running on **Windows**
+* Avahi (or an equivalent mDNS responder) if running on **Linux** (if not already installed by default)
+* WiFi or mobile hotspot  
+<small>*: required only if building from source</small>
 
 ### mDNS Responders for Windows
+
 If you have one of these installed, you can probably skip this:
 - Bonjour Print Services
 - iTunes
@@ -58,7 +63,16 @@ If you have one of these installed, you can probably skip this:
 
 This is a non-exhaustive list.
 
-### Installation
+### Download the Latest Release
+
+While we do not have a complete product yet, you can download our latest
+development snapshot from the **[releases page](https://github.com/Aeroduel/server/releases)**.
+
+### Installation from Source
+
+> Note: It would be easier to download our **[pre-built GitHub releases](https://github.com/Aeroduel/server/releases)**.
+Additionally, it is not guaranteed that building from the latest source code 
+will always build a stable version.
 
 1. **Clone the repository:**
    ```bash
@@ -71,22 +85,32 @@ This is a non-exhaustive list.
    npm install
    ```
 
-3. **Run in Development Mode:**
-   This runs the Next.js development server inside the Electron shell.
-   ```bash
-   npm run dev
-   ```
+### Building the Application
 
-### Building for Production
-
-To create a distributable desktop application (AppImage, dmg, exe), you must first build the Next.js application in
-standalone mode, and then package it with Electron.
+To create a distributable desktop application (AppImage, dmg, exe), you must 
+first build the Next.js application in standalone mode, and then package it 
+with Electron. We've made this simple for you and combined them into one step
+with a script.
 
 **Build Next.js source and package the application:**
 ```bash
-npm run e-build
+npm run build
 ```
-*Note: The output will be located in the `dist` directory.*
+The output will be located in the `dist` directory.  
+*Note: On windows, an installer will be built. You will have to run this to 
+install the real application. MacOS and Linux versions do not require this step.*
+
+### Running the Application
+Navigate to the `dist` directory and run the executable. The executable will 
+have a different file extension depending on your operating system.
+
+#### Windows
+`aeroduel_server-<version code>.nsis`
+#### MacOS
+`aeroduel_server-<version code>.dmg`
+#### Linux
+`aeroduel_server-<version code>.AppImage`  
+<small>I use arch btw</small>
 
 ## Features
 
@@ -165,8 +189,7 @@ Distributed under the MIT License. See [LICENSE](LICENSE) for more information.
 
 ### Backend Team
 
-- ["Zytronium"](https://github.com/Zytronium)
-- [Tristan Davis](https://github.com/TebariousBag)
+["Zytronium"](https://github.com/Zytronium)
 
 ### Aeroduel Team
 
@@ -174,4 +197,3 @@ Distributed under the MIT License. See [LICENSE](LICENSE) for more information.
 - ["Zytronium"](https://github.com/Zytronium)
 - [Tristan Davis](https://github.com/TebariousBag)
 - [Zack Yuan](https://github.com/zack6yuan)
-- [Frandy Slueue](https://github.com/Frandy4ever)

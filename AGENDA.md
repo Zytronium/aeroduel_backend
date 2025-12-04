@@ -46,6 +46,7 @@ Zytronium's daily agenda for progress on Aeroduel
 
 - [ ] Polish WebSockets
 - [ ] Fix WebSockets bugs
+- [ ] Fix more API bugs
 - [ ] Add API endpoints for linking planes via mobile app
 - [ ] Add more API endpoints for admin controls
 - [ ] Add admin controls to server app UI

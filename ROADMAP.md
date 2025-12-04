@@ -53,6 +53,14 @@ Write up a detailed markdown API.md for the server endpoints. This helps other
 developers understand the server when forking and editing the code, perhaps even
 to use the API in their own projects.
 
+### WebSocket connections
+Implement a WebSocket connection with the mobile app and ESP32s. This allows
+the server to send updates to the mobile app when a plane hits the target and
+send commands to the planes, for example, to flash their lights or tell them
+they've been hit. WebSockets also allows the server to assume the plane has
+been powered off if it loses the WebSocket connection for more than a few
+seconds.
+
 ## Todo
 
 ### RC Plane Registration/Linking
@@ -66,14 +74,6 @@ flashing its lights. Finally, the mobile app will save the plane's ID to the use
 account and the plane will save the userID to its persistent storage. This 
 requires programming across all three platforms — the server, mobile app, and 
 arduino.
-
-### WebSocket connections
-Implement a WebSocket connection with the mobile app and ESP32s. This allows
-the server to send updates to the mobile app when a plane hits the target and
-send commands to the planes, for example, to flash their lights or tell them 
-they've been hit. WebSockets also allows the server to assume the plane has 
-been powered off if it loses the WebSocket connection for more than a few
-seconds.
 
 ---
 
