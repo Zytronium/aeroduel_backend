@@ -242,7 +242,7 @@ export default function MatchPage() {
           <h2 className="text-xl text-white font-bold mb-2 border-b border-skyblue/20 pb-2 text-center">
             Online Planes
           </h2>
-          <div className="flex-1 overflow-y-auto pr-1 space-y-4">
+          <div className="flex-1 overflow-y-auto w-full pr-1 space-y-4">
             {onlinePlanes.length === 0 && (
               <p className="text-skyblue/60 text-sm text-center mt-4">
                 No planes online.
@@ -298,14 +298,6 @@ export default function MatchPage() {
           <div className="bg-navy/80 backdrop-blur-md border-2 border-skyblue/30 rounded-3xl p-6 w-full flex flex-col gap-4 shadow-lg shadow-navy/50 opacity-90">
             <div className="flex items-center justify-between mb-1 border-b border-skyblue/20 pb-2">
               <h2 className="text-2xl text-white font-bold">Match Settings</h2>
-              {/* Admin panel button (disabled for now) */}
-              <button
-                type="button"
-                disabled
-                className="px-3 py-1.5 rounded-xl text-xs font-semibold border border-skyblue/30 text-skyblue/60 bg-darkernavy/60 cursor-not-allowed"
-              >
-                Admin Panel (coming soon)
-              </button>
             </div>
 
             {/* Duration Control (disabled) */}
@@ -381,8 +373,8 @@ export default function MatchPage() {
                 disabled={ending}
                 className={`px-6 py-3 rounded-2xl text-sm font-semibold border-2 text-white shadow-md transition-all ${
                   ending
-                    ? "bg-maroon/70 border-maroon/60 cursor-not-allowed opacity-70"
-                    : "bg-red-700 border-maroon hover:bg-red-600 hover:scale-105 cursor-pointer"
+                    ? "bg-red-700/70 border-red-950/60 cursor-not-allowed opacity-70"
+                    : "bg-red-700 border-red-950 hover:bg-red-600 hover:scale-105 cursor-pointer"
                 }`}
               >
                 {ending ? "Ending match..." : "End Match Early"}
@@ -426,7 +418,7 @@ export default function MatchPage() {
           <h2 className="text-xl text-white font-bold mb-2 border-b border-skyblue/20 pb-2 text-center">
             Live Scores
           </h2>
-          <div className="flex-1 overflow-y-auto pr-1 space-y-4">
+          <div className="flex-1 overflow-y-auto w-full pr-1 space-y-4">
             {scoreboard.length === 0 && (
               <p className="text-skyblue/60 text-sm text-center mt-4">
                 No players in match.
