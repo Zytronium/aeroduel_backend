@@ -36,76 +36,86 @@ type HelloMessage =
       authToken: string;
     };
 
+interface MatchUpdate {
+  type: "match:update";
+  data: {
+    status: "waiting" | "active" | "ended";
+    timeRemaining?: number | null;
+    scores: Array<{
+      planeId: string;
+      playerName?: string;
+      hits: number;
+      hitsTaken: number;
+      isDisqualified: boolean;
+    }>;
+  };
+}
+
+interface PlaneHit {
+  type: "plane:hit";
+  data: {
+    planeId: string;
+    targetId: string;
+    timestamp: string;
+  };
+}
+
+interface MatchEnd {
+  type: "match:end";
+  data: {
+    winners: string[];
+    scores: Array<{
+      planeId: string;
+      playerName?: string;
+      hits: number;
+      hitsTaken: number;
+      isDisqualified: boolean;
+    }>;
+  };
+}
+
+interface SystemAcknowledge {
+  type: "system:ack";
+  data: {
+    role: WSClientRole;
+    userId?: string;
+    planeId?: string;
+    matchId?: string;
+  };
+}
+
+interface SystemError {
+  type: "system:error";
+  error: string;
+}
+
+interface PlaneFlash {
+  type: "plane:flash";
+  data: {
+    planeId: string;
+    byPlaneId: string;
+    timestamp: string;
+  };
+}
+
+interface MatchStateMsg {
+  type: "match:state";
+  data: {
+    status: "waiting" | "active" | "ended";
+  };
+}
+
+interface PlaneRemoved {
+  type: "plane:kicked" | "plane:disqualified";
+  data: {
+    planeId: string;
+    reason: "kick" | "disconnect" | "manual";
+  };
+}
+
 type OutgoingMessage =
-  | {
-      type: "match:update";
-      data: {
-        status: "waiting" | "active" | "ended";
-        timeRemaining?: number | null;
-        scores: Array<{
-          planeId: string;
-          playerName?: string;
-          hits: number;
-          hitsTaken: number;
-          isDisqualified: boolean;
-        }>;
-      };
-    }
-  | {
-      type: "plane:hit";
-      data: {
-        planeId: string;
-        targetId: string;
-        timestamp: string;
-      };
-    }
-  | {
-      type: "match:end";
-      data: {
-        winners: string[];
-        scores: Array<{
-          planeId: string;
-          playerName?: string;
-          hits: number;
-          hitsTaken: number;
-          isDisqualified: boolean;
-        }>;
-      };
-    }
-  | {
-      type: "system:ack";
-      data: {
-        role: WSClientRole;
-        userId?: string;
-        planeId?: string;
-        matchId?: string;
-      };
-    }
-  | {
-      type: "system:error";
-      error: string;
-    }
-  | {
-      type: "plane:flash";
-      data: {
-        planeId: string;
-        byPlaneId: string;
-        timestamp: string;
-      };
-    }
-  | {
-      type: "match:state";
-      data: {
-        status: "waiting" | "active" | "ended";
-      };
-    }
-  | {
-      type: "plane:kicked" | "plane:disqualified";
-      data: {
-        planeId: string;
-        reason: "kick" | "disconnect" | "manual";
-      };
-    };
+  | MatchUpdate |  PlaneHit  |   MatchEnd    | SystemAcknowledge
+  | SystemError | PlaneFlash | MatchStateMsg |   PlaneRemoved;
 
 // WebSocket port: default to PORT + 1 so we don't collide with HTTP server
 export const WS_PORT = Number(
