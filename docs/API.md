@@ -430,53 +430,10 @@ Impossible
 
 ---
 
-## WebSocket Events _<small>(Coming Soon)</small>_
-
+## WebSocket Events
 Real-time communication for match updates.
 
-**Connection:**
-```javascript
-const ws = new WebSocket('ws://aeroduel.local:45045');
-```
-
-**Events:**
-
-#### Server -> Client
-
-**`match:update`**
-```json
-{
-  "type": "match:update",
-  "data": {
-    "status": "active",
-    "timeRemaining": 300,
-    "scores": [...]
-  }
-}
-```
-
-**`plane:hit`**
-```json
-{
-  "type": "plane:hit",
-  "data": {
-    "planeId": "uuid",
-    "hitBy": "uuid",
-    "timestamp": "2025-11-21T12:05:30Z"
-  }
-}
-```
-
-**`match:end`**
-```json
-{
-  "type": "match:end",
-  "data": {
-    "winner": "uuid",
-    "finalScores": [...]
-  }
-}
-```
+This section has been moved to [docs/WebSockets.md](/docs/WebSockets.md).
 
 ---
 
@@ -677,4 +634,4 @@ Arduino-only endpoints: Only the ESP32s can make requests to this endpoint, and 
 ---
 
 **Documentation Created**: November 21, 2025  
-**Last Updated**: December 1, 2025
+**Last Updated**: December 5, 2025
