@@ -295,7 +295,7 @@ export default function LobbyPage() {
           <h2 className="text-xl text-white font-bold mb-2 border-b border-skyblue/20 pb-2 text-center">
             Online Planes
           </h2>
-          <div className="flex-1 overflow-y-auto pr-1 space-y-4">
+          <div className="flex-1 overflow-y-auto w-full pr-1 space-y-4">
             {onlinePlanes.length === 0 && (
               <p className="text-skyblue/60 text-sm text-center mt-4">
                 No planes online yet.
@@ -417,7 +417,7 @@ export default function LobbyPage() {
           <h2 className="text-xl text-white font-bold mb-2 border-b border-skyblue/20 pb-2 text-center">
             Joined Planes
           </h2>
-          <div className="flex-1 overflow-y-auto pr-1 space-y-4">
+          <div className="flex-1 overflow-y-auto w-full pr-1 space-y-4">
             {joinedPlanes.length === 0 && (
               <p className="text-skyblue/60 text-sm text-center mt-4">
                 Waiting for players to join...
