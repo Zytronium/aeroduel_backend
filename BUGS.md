@@ -61,8 +61,11 @@ The bug tracker for the Aeroduel Server.
 - I forgot to make match state reset on match creation.
 - I made match state reset on match creation but it didn't work somehow.
 
-#### Possible Fixes and Workarounds
-- Add a resetMatchState function to utils and call it in api/new-match or api/end-match
+#### Most Likely Cause
+- Scores are no longer part of the match state and are stored separately. Match state does reset, but plane scores do not.
+
+#### Fixes
+- Reset match stats on every plane when match ends or a new one is created.
 
 ---
 

@@ -85,27 +85,9 @@ export function updateCurrentMatch(
     userAuthTokens.clear();
   }
 
-  // If a match has just transitioned to "ended", kick all joined planes.
-  if (
-    previousMatch &&
-    previousMatch.status !== "ended" &&
-    currentMatch &&
-    currentMatch.status === "ended"
-  ) {
-    // Mark all previously joined planes as no longer joined
-    for (const planeId of previousMatch.matchPlanes) {
-      const plane = getPlaneById(planeId);
-      if (plane) {
-        plane.isJoined = false;
-      }
-    }
-
-    // Clear the joined list on the ended match state
-    currentMatch = {
-      ...currentMatch,
-      matchPlanes: [],
-    };
-  }
+  // NOTE: We no longer clear matchPlanes or isJoined flags when a match ends.
+  // This allows the ended match to retain its joined planes for display and
+  // post‑match stats. Per‑match cleanup should happen when a NEW match is created.
 
   return currentMatch;
 }
