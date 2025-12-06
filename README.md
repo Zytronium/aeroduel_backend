@@ -97,8 +97,8 @@ with a script.
 npm run build
 ```
 The output will be located in the `dist` directory.  
-*Note: On windows, an installer will be built. You will have to run this to 
-install the real application. MacOS and Linux versions do not require this step.*
+> *Note: On Windows and MacOS, an installer will be built. You will have to run this to 
+install the real application. The Linux version does not require this step.*
 
 ### Running the Application
 Navigate to the `dist` directory and run the executable. The executable will 
