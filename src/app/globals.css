@@ -1,44 +1,44 @@
 @import "tailwindcss";
 
 @theme {
-    --background-primary: #99cfff;
-    --background-secondary: #14a3bd;
-    --foreground-primary: #0b1d39;
-    --foreground-secondary: #3e82ff;
-    --accent-primary: #d5533c;
-    --accent-secondary: #b60c0c;
-    --accent-tertiary: #cba35e;
+  --background-primary: #99cfff;
+  --background-secondary: #14a3bd;
+  --foreground-primary: #0b1d39;
+  --foreground-secondary: #3e82ff;
+  --accent-primary: #d5533c;
+  --accent-secondary: #b60c0c;
+  --accent-tertiary: #cba35e;
 }
 
 :root {
-    --background: var(--foreground-primary);
-    --foreground: var(--background-primary);
-    --accent: var(--accent-primary);
-    --accent-2: var(--accent-secondary);
-    --accent-3: var(--accent-tertiary);
+  --background: var(--foreground-primary);
+  --foreground: var(--background-primary);
+  --accent: var(--accent-primary);
+  --accent-2: var(--accent-secondary);
+  --accent-3: var(--accent-tertiary);
 
-    --scrollbar-bg: #001225;
-    --scrollbar-thumb: var(--accent-tertiary);
-    --scrollbar-thumb-hover: #f2c469;
+  --scrollbar-bg: #001225;
+  --scrollbar-thumb: var(--accent-tertiary);
+  --scrollbar-thumb-hover: #f2c469;
 }
 
 @theme inline {
-    --color-background: var(--background);
-    --color-foreground: var(--foreground);
-    --color-accent: var(--accent);
-    --color-accent-2: var(--accent-2);
-    --color-accent-3: var(--accent-3);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-accent: var(--accent);
+  --color-accent-2: var(--accent-2);
+  --color-accent-3: var(--accent-3);
 
-    --color-navy: var(--foreground-primary);
-    --color-darkernavy: var(--scrollbar-bg);
-    --color-teal: var(--background-secondary);
-    --color-blue: var(--foreground-secondary);
-    --color-skyblue: var(--background-primary);
-    --color-redorange: var(--accent-primary);
-    --color-maroon: var(--accent-secondary);
-    --color-gold: var(--accent-tertiary);
+  --color-navy: var(--foreground-primary);
+  --color-darkernavy: var(--scrollbar-bg);
+  --color-teal: var(--background-secondary);
+  --color-blue: var(--foreground-secondary);
+  --color-skyblue: var(--background-primary);
+  --color-redorange: var(--accent-primary);
+  --color-maroon: var(--accent-secondary);
+  --color-gold: var(--accent-tertiary);
 
-    --font-sans: 'GltpStarion', sans-serif;
+  --font-sans: "GltpStarion", sans-serif;
 }
 
 /*@media (prefers-color-scheme: dark) {*/
@@ -53,96 +53,245 @@
 /*}*/
 
 body {
-    background: var(--background);
-    color: var(--foreground);
-    font-family: var(--font-sans), Inter, Arial, Helvetica, sans-serif;
-    overflow-y: hidden;
+  background: var(--background);
+  color: var(--foreground);
+  font-family: "XIROD", "GltpStarion", Inter, Arial, Helvetica, sans-serif;
+  overflow-y: hidden;
 }
 
 * {
-    font-family: var(--font-sans), Inter, Arial, Helvetica, sans-serif;
+  font-family: "XIROD", "GltpStarion", Inter, Arial, Helvetica, sans-serif;
 }
 
 h1 {
-    @apply text-5xl font-bold my-4;
+  @apply text-5xl font-bold my-4;
+  font-family: "VIPESSRG", "GltpStarion", sans-serif;
+  letter-spacing: 0.05em;
 }
 
 h2 {
-    @apply text-3xl font-semibold my-3;
+  @apply text-3xl font-semibold my-3;
+  font-family: "VIPESSRG", "GltpStarion", sans-serif;
+  letter-spacing: 0.05em;
 }
 
 h3 {
-    @apply text-2xl font-medium my-2;
+  @apply text-2xl font-medium my-2;
+  font-family: "VIPESSRG", "GltpStarion", sans-serif;
+  letter-spacing: 0.05em;
 }
 
 h4 {
-    @apply text-xl my-1;
+  @apply text-xl my-1;
+  font-family: "VIPESSRG", "GltpStarion", sans-serif;
+  letter-spacing: 0.05em;
 }
 
 h5 {
-    @apply text-lg my-[0.5];
+  @apply text-lg my-[0.5];
+  font-family: "VIPESSRG", "GltpStarion", sans-serif;
+  letter-spacing: 0.05em;
 }
 
 h6 {
-    @apply text-sm mb-[0.25];
+  @apply text-sm mb-[0.25];
+  font-family: "VIPESSRG", "GltpStarion", sans-serif;
+  letter-spacing: 0.05em;
 }
 
 section {
-    @apply px-4 md:px-14 lg:px-16 xl:px-20 py-2 flex flex-col items-center border-b-2 border-maroon;
+  @apply px-4 md:px-14 lg:px-16 xl:px-20 py-2 flex flex-col items-center border-b-2 border-maroon;
 }
 
-section p, section small, section strong, section a {
-    @apply text-start md:w-[90%] lg:w-[80%] xl:w-[66%];
+section p,
+section small,
+section strong,
+section a {
+  @apply text-start md:w-[90%] lg:w-[80%] xl:w-[66%];
 }
 
 section p {
-    @apply mb-4;
+  @apply mb-4;
 }
 
 @font-face {
-    font-family: 'GltpStarion';
-    src: url('/fonts/GltpStarionRegular.otf');
+  font-family: "GltpStarion";
+  src: url("/fonts/GltpStarionRegular.otf");
+}
+
+@font-face {
+  font-family: "VIPESSRG";
+  src: url("/fonts/VIPESSRG.TTF");
+}
+
+@font-face {
+  font-family: "XIROD";
+  src: url("/fonts/Xirod.otf");
 }
 
 .title {
-    @apply text-7xl font-thin text-center mb-1;
+  @apply text-7xl font-thin text-center mb-1;
 }
 
 .subtitle {
-    @apply text-center mb-4;
+  @apply text-center mb-4;
 }
 
 .btn {
-    @apply px-6 py-4 m-2 rounded-4xl bg-[#437A89FF] border-2 border-navy text-sky-100 hover:bg-[#399CB4FF] transition-transform transition-colors duration-250 cursor-pointer text-6xl inline-flex items-center justify-center gap-3 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-offset-2 focus-visible:ring-skyblue active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-[#437A89FF];
+  @apply px-6 py-4 m-2 rounded-4xl bg-[#437A89FF] border-2 border-navy text-sky-100 hover:bg-[#399CB4FF] transition-transform transition-colors duration-250 cursor-pointer text-6xl inline-flex items-center justify-center gap-3 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-offset-2 focus-visible:ring-skyblue active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-[#437A89FF];
 }
 
 .bg-img {
-    background-image: url("/black-plane.svg"), url("/white-plane.svg");
-    background-repeat: no-repeat, no-repeat;
+  background-image: url("/black-plane.svg"), url("/white-plane.svg");
+  background-repeat: no-repeat, no-repeat;
 
-    /* Left and right horizontally, centered vertically */
-    background-position: left center, right center;
+  /* Left and right horizontally, centered vertically */
+  background-position: left center, right center;
 
-    /* Scale as needed (optional) */
-    background-size: auto 60%; /* example height scaling */
+  /* Scale as needed (optional) */
+  background-size: auto 60%; /* example height scaling */
 }
 
+/* On medium and small screens, show only one plane (centered - black) at smaller size */
+@media (max-width: 1024px) {
+  .bg-img {
+    background-image: url("/black-plane.svg");
+    background-position: center center;
+    background-size: 70% 70%;
+  }
+}
+
+/* On very small screens, hide the plane to prevent content overlap */
+@media (max-width: 768px) {
+  .bg-img {
+    background-image: none;
+  }
+}
+
+/* Lobby and Match pages - black jet full screen, centered at top on all sizes */
+body.lobby-match-bg.bg-img {
+  background-image: url("/black-plane.svg");
+  background-position: center top;
+  background-size: 100% auto;
+  background-repeat: no-repeat;
+}
+
+@media (max-width: 768px) {
+  body.lobby-match-bg.bg-img {
+    background-image: url("/black-plane.svg");
+    background-position: center top;
+    background-size: 100% auto;
+  }
+}
 
 /* Scrollbar colors for Chrome, Edge, and Safari */
 ::-webkit-scrollbar {
-    width: 12px;
+  width: 12px;
 }
 
 ::-webkit-scrollbar-track {
-    background: var(--scrollbar-bg);
+  background: var(--scrollbar-bg);
 }
 
 ::-webkit-scrollbar-thumb {
-    background-color: var(--scrollbar-thumb);
-    border-radius: 20px;
-    border: 3px solid var(--scrollbar-bg);
+  background-color: var(--scrollbar-thumb);
+  border-radius: 20px;
+  border: 3px solid var(--scrollbar-bg);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background-color: var(--scrollbar-thumb-hover);
+  background-color: var(--scrollbar-thumb-hover);
+}
+
+/* Match events scrollbar styling */
+.match-events-scroll::-webkit-scrollbar {
+  width: 8px;
+}
+
+.match-events-scroll::-webkit-scrollbar-track {
+  background: rgba(11, 29, 57, 0.5);
+  border-radius: 4px;
+}
+
+.match-events-scroll::-webkit-scrollbar-thumb {
+  background-color: rgba(153, 207, 255, 0.3);
+  border-radius: 4px;
+  border: 2px solid rgba(11, 29, 57, 0.5);
+}
+
+.match-events-scroll::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(153, 207, 255, 0.5);
+}
+
+@keyframes pulse-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 15px rgba(153, 207, 255, 0.4),
+      0 0 30px rgba(153, 207, 255, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(153, 207, 255, 0.5),
+      0 0 40px rgba(153, 207, 255, 0.3);
+  }
+}
+
+@keyframes battle-glow-red {
+  0%,
+  100% {
+    box-shadow: 0 0 25px rgba(173, 0, 0, 0.8), 0 0 50px rgba(173, 0, 0, 0.5),
+      0 0 75px rgba(173, 0, 0, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 35px rgba(173, 0, 0, 1), 0 0 70px rgba(173, 0, 0, 0.7),
+      0 0 100px rgba(173, 0, 0, 0.4);
+  }
+}
+
+@keyframes pulse-glow-red {
+  0%,
+  100% {
+    box-shadow: 0 0 20px rgba(173, 0, 0, 0.6), 0 0 40px rgba(173, 0, 0, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(173, 0, 0, 0.8), 0 0 60px rgba(173, 0, 0, 0.5);
+  }
+}
+
+@keyframes pulse-logo-glow {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 10px rgba(153, 207, 255, 0.3));
+  }
+  50% {
+    filter: drop-shadow(0 0 18px rgba(153, 207, 255, 0.5));
+  }
+}
+
+@keyframes pulse-logo-glow-red {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 15px rgba(173, 0, 0, 0.6));
+  }
+  50% {
+    filter: drop-shadow(0 0 25px rgba(173, 0, 0, 0.9));
+  }
+}
+
+/* Page transition fade */
+.page-fade-enter {
+  opacity: 0;
+}
+
+.page-fade-enter-active {
+  opacity: 1;
+  transition: opacity 500ms ease-in;
+}
+
+.page-fade-exit {
+  opacity: 1;
+}
+
+.page-fade-exit-active {
+  opacity: 0;
+  transition: opacity 500ms ease-out;
 }

@@ -11,19 +11,23 @@ export default function MatchPage() {
 
   const [duration, setDuration] = useState(420);
   const [maxPlayers, setMaxPlayers] = useState(2);
+  const [timeRemaining, setTimeRemaining] = useState(420);
 
   const [planes, setPlanes] = useState<Plane[]>([]);
   const [events, setEvents] = useState<Event[]>([]);
   const [ending, setEnding] = useState(false);
   const [kickingId, setKickingId] = useState<string | null>(null);
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [isTransitioning, setIsTransitioning] = useState(true);
 
   const timeoutRef = useRef<number | null>(null);
+  const countdownIntervalRef = useRef<number | null>(null);
 
   const onlinePlanes = planes.filter((p) => p.isOnline);
   const joinedPlanes = planes.filter((p) => p.isJoined);
 
-  const displayMinutes = Math.floor(duration / 60);
-  const displaySeconds = duration % 60;
+  const displayMinutes = Math.floor(timeRemaining / 60);
+  const displaySeconds = timeRemaining % 60;
 
   // Scores sorted by hits desc, hitsTaken asc
   const scoreboard = [...joinedPlanes].sort((a, b) => {
@@ -44,6 +48,16 @@ export default function MatchPage() {
     // disabled
   };
 
+  // Fade-in transition when page loads
+  useEffect(() => {
+    // Start with transition, then fade in
+    setIsTransitioning(true);
+    const timer = setTimeout(() => {
+      setIsTransitioning(false);
+    }, 100);
+    return () => clearTimeout(timer);
+  }, []);
+
   // Fetch current match state (duration, maxPlayers, events)
   useEffect(() => {
     let active = true;
@@ -58,6 +72,17 @@ export default function MatchPage() {
         setDuration(match.duration);
         setMaxPlayers(match.maxPlayers);
         setEvents(match.events ?? []);
+
+        // Calculate time remaining based on match status and createdAt
+        if (match.status === "active" && match.createdAt) {
+          const elapsed = Math.floor(
+            (Date.now() - new Date(match.createdAt).getTime()) / 1000
+          );
+          const remaining = Math.max(0, match.duration - elapsed);
+          setTimeRemaining(remaining);
+        } else {
+          setTimeRemaining(match.duration);
+        }
       } catch (err) {
         console.error("Failed to load match state", err);
       }
@@ -66,9 +91,17 @@ export default function MatchPage() {
     loadMatch();
     const intervalId = window.setInterval(loadMatch, 2000);
 
+    // Countdown timer that updates every second
+    countdownIntervalRef.current = window.setInterval(() => {
+      setTimeRemaining((prev) => Math.max(0, prev - 1));
+    }, 1000);
+
     return () => {
       active = false;
       window.clearInterval(intervalId);
+      if (countdownIntervalRef.current) {
+        window.clearInterval(countdownIntervalRef.current);
+      }
     };
   }, []);
 
@@ -98,6 +131,11 @@ export default function MatchPage() {
     };
   }, []);
 
+  // Trigger fade-in animation on mount
+  useEffect(() => {
+    setIsLoaded(true);
+  }, []);
+
   async function endMatchEarly() {
     if (ending) return;
     setEnding(true);
@@ -119,7 +157,7 @@ export default function MatchPage() {
 
       if (response.status === 403) {
         alert(
-          "You are not authorized to end the match from here. Try again in the app.",
+          "You are not authorized to end the match from here. Try again in the app."
         );
       } else if (response.status === 404) {
         alert("No active match to end.");
@@ -128,8 +166,6 @@ export default function MatchPage() {
       } else if (!response.ok) {
         alert("An unknown error occurred while ending the match.");
       } else if (data.success === true || data.success === "true") {
-        alert("Match ended.");
-        // todo: display final results. Perhaps make a new page for this.
         router.push("/");
       }
 
@@ -166,12 +202,12 @@ export default function MatchPage() {
 
       if (response.status === 403) {
         alert(
-          "You are not authorized to kick or disqualify planes from here. Try again in the app.",
+          "You are not authorized to kick or disqualify planes from here. Try again in the app."
         );
       } else if (!response.ok) {
         alert(data.error ?? "Failed to kick or disqualify plane.");
       } else if (data.success === true || data.success === "true") {
-        alert("Plane has been kicked / disqualified.");
+        // Plane kicked/disqualified successfully
       }
 
       console.log("Kick plane response:", JSON.stringify(data));
@@ -188,298 +224,557 @@ export default function MatchPage() {
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
       }
+      if (countdownIntervalRef.current) {
+        clearInterval(countdownIntervalRef.current);
+      }
     };
   }, []);
 
-  const formatEvent = (event: Event): string => {
+  const getEventIcon = (type: string): string => {
+    switch (type) {
+      case "join":
+        return "[JOIN]";
+      case "leave":
+        return "[LEFT]";
+      case "hit":
+        return "[HIT]";
+      case "disqualify":
+        return "[DQ]";
+      default:
+        return "[•]";
+    }
+  };
+
+  const getEventColor = (type: string): string => {
+    switch (type) {
+      case "join":
+        return "text-green-400 bg-green-900/30 border-green-500/40";
+      case "leave":
+        return "text-skyblue/70 bg-skyblue/10 border-skyblue/20";
+      case "hit":
+        return "text-red-300 bg-red-900/40 border-red-500/50";
+      case "disqualify":
+        return "text-red-400 bg-red-900/40 border-red-500/50";
+      default:
+        return "text-skyblue/90 bg-darkernavy/60 border-skyblue/10";
+    }
+  };
+
+  const formatEvent = (
+    event: Event
+  ): {
+    time: string;
+    message: string;
+    icon: string;
+    color: string;
+    planeId: string;
+    targetId?: string;
+  } => {
     const time = new Date(event.timestamp).toLocaleTimeString(undefined, {
       hour: "2-digit",
       minute: "2-digit",
       second: "2-digit",
     });
 
+    let message = "";
     switch (event.type) {
       case "join":
-        return `[${time}] Plane ${event.planeId} joined the match`;
+        message = `Plane ${event.planeId} joined the match`;
+        break;
       case "leave":
-        return `[${time}] Plane ${event.planeId} left the match`;
+        message = `Plane ${event.planeId} left the match`;
+        break;
       case "hit":
-        return `[${time}] Plane ${event.planeId} hit plane ${event.targetId}`;
+        message = `Plane ${event.planeId} hit plane ${event.targetId}`;
+        break;
       case "disqualify":
-        return `[${time}] Plane ${event.planeId} was disqualified`;
+        message = `Plane ${event.planeId} was disqualified`;
+        break;
       default:
-        return `[${time}] Event`;
+        message = "Event";
+    }
+
+    return {
+      time,
+      message,
+      icon: getEventIcon(event.type),
+      color: getEventColor(event.type),
+      planeId: event.planeId,
+      targetId: event.targetId,
+    };
+  };
+
+  const getRankIcon = (rank: number): string => {
+    // Return empty string - ranking handled by # badge
+    return "";
+  };
+
+  const getRankStyle = (rank: number): string => {
+    switch (rank) {
+      case 1:
+        return "border-gold/60 bg-gradient-to-r from-gold/20 via-gold/10 to-transparent shadow-[0_0_20px_rgba(203,163,94,0.5)]";
+      case 2:
+        return "border-skyblue/50 bg-gradient-to-r from-skyblue/15 via-skyblue/8 to-transparent shadow-[0_0_15px_rgba(153,207,255,0.3)]";
+      case 3:
+        return "border-orange-400/40 bg-gradient-to-r from-orange-400/10 via-orange-400/5 to-transparent shadow-[0_0_10px_rgba(251,146,60,0.2)]";
+      default:
+        return "border-skyblue/30 bg-gradient-to-r from-darkernavy/90 via-darkernavy/70 to-skyblue/20";
     }
   };
+
+  const isTimeRunningOut = timeRemaining <= 60;
+  const isTimeCritical = timeRemaining <= 30;
+
+  useEffect(() => {
+    // Allow scrolling on match page
+    document.body.style.overflowY = "auto";
+    return () => {
+      document.body.style.overflowY = "hidden";
+    };
+  }, []);
+
+  useEffect(() => {
+    // Override body background for match page - black jet centered at top
+    document.body.classList.add("lobby-match-bg");
+
+    return () => {
+      document.body.classList.remove("lobby-match-bg");
+    };
+  }, []);
 
   return (
     <main
       role="main"
-      className="w-full px-6 flex flex-col gap-6 min-h-screen"
+      className="w-full px-6 flex flex-col gap-6 min-h-screen relative"
     >
-      <header className="text-center self-center mt-8">
-        <Image
-          src="/logo_text.svg"
-          alt="Aeroduel"
-          width={493 * 2}
-          height={64 * 2}
-        />
-        <Image
-          src="/server-text.svg"
-          alt="Server"
-          width={270}
-          height={45}
-          className="mt-4 mb-8 mx-auto"
-        />
-        <p className="text-skyblue drop-shadow-[0_1.2px_1.2px_var(--color-navy)]">
-          Aeroduel match hosting server
-        </p>
-      </header>
+      {/* Background overlay - red/black gradient overlay */}
+      <div
+        className="fixed inset-0 pointer-events-none z-0 opacity-80"
+        style={{
+          background:
+            "linear-gradient(-45deg, #000000, #000000, #ad0000, #ad0000, #000000, #000000)",
+        }}
+      ></div>
 
-      <div className="flex-1 grid grid-cols-[minmax(0,1.6fr)_minmax(260px,0.8fr)_minmax(0,1.6fr)] gap-6 items-stretch">
-        {/* Online planes (left) */}
-        <section className="bg-navy/80 backdrop-blur-md border-2 border-skyblue/30 rounded-3xl p-4 flex flex-col shadow-lg shadow-navy/50 overflow-hidden">
-          <h2 className="text-xl text-white font-bold mb-2 border-b border-skyblue/20 pb-2 text-center">
-            Online Planes
-          </h2>
-          <div className="flex-1 overflow-y-auto w-full pr-1 space-y-4">
-            {onlinePlanes.length === 0 && (
-              <p className="text-skyblue/60 text-sm text-center mt-4">
-                No planes online.
-              </p>
-            )}
-            {onlinePlanes.map((plane, index) => {
-              const iconSrc =
-                index % 2 === 0 ? "/plane-right.svg" : "/plane-white-right.svg";
+      <div
+        className={`flex flex-col justify-center items-center max-w-[1920px] mx-auto w-full py-6 relative z-10 transition-opacity duration-500 ${
+          isTransitioning ? "opacity-0" : "opacity-100"
+        }`}
+      >
+        <header className="text-center self-center mb-6 relative z-10">
+          <Image
+            src="/logo_text.svg"
+            alt="Aeroduel"
+            width={493 * 2}
+            height={64 * 2}
+            className="drop-shadow-[0_0_10px_rgba(173,0,0,0.3)]"
+            style={{
+              animation: "pulse-logo-glow-red 1.5s ease-in-out infinite",
+            }}
+          />
+          <Image
+            src="/server-text.svg"
+            alt="Server"
+            width={270}
+            height={45}
+            className="mt-3 mb-4 mx-auto drop-shadow-[0_0_10px_rgba(173,0,0,0.3)]"
+            style={{
+              animation: "pulse-logo-glow-red 1.5s ease-in-out infinite",
+            }}
+          />
+          <p className="text-skyblue drop-shadow-[0_1.2px_1.2px_var(--color-navy)] text-sm">
+            Aeroduel match hosting server
+          </p>
+        </header>
 
-              return (
-                <div
-                  key={plane.planeId}
-                  className="rounded-2xl border border-skyblue/30 bg-gradient-to-r from-darkernavy/90 via-darkernavy/70 to-skyblue/20 px-5 py-4 text-base flex items-center gap-4 shadow-md shadow-navy/60 min-h-[100px]"
-                >
-                  <div className="flex-shrink-0">
-                    <Image
-                      src={iconSrc}
-                      alt="Plane icon"
-                      width={56}
-                      height={56}
-                      className="drop-shadow-[0_0_8px_rgba(56,189,248,0.7)]"
-                    />
-                  </div>
-                  <div className="flex flex-col flex-1 gap-1">
-                    <div className="flex justify-between items-center gap-2">
-                      <span className="font-semibold text-skyblue text-base truncate">
-                        {plane.playerName || "Unlinked Plane"}
-                      </span>
-                      {plane.isJoined && (
-                        <span className="text-sm text-gold font-semibold px-2 py-0.5 rounded-full bg-gold/10">
-                          In Match
-                        </span>
-                      )}
-                    </div>
-                    <span className="text-sm text-skyblue/70 break-all">
-                      ID: {plane.planeId}
-                    </span>
-                    {plane.esp32Ip && (
-                      <span className="text-sm text-skyblue/60">
-                        IP: {plane.esp32Ip}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </section>
-
-        {/* Center: match settings (read-only) + controls + events */}
-        <div className="flex flex-col items-stretch justify-start gap-4 w-full">
-          {/* Match Settings (read-only) */}
-          <div className="bg-navy/80 backdrop-blur-md border-2 border-skyblue/30 rounded-3xl p-6 w-full flex flex-col gap-4 shadow-lg shadow-navy/50 opacity-90">
-            <div className="flex items-center justify-between mb-1 border-b border-skyblue/20 pb-2">
-              <h2 className="text-2xl text-white font-bold">Match Settings</h2>
-            </div>
-
-            {/* Duration Control (disabled) */}
-            <div className="flex flex-row items-center justify-between">
-              <span className="text-lg text-skyblue font-bold uppercase tracking-wider">
-                Match Duration
-              </span>
-              <div className="flex items-center gap-2 bg-darkernavy/50 p-2 rounded-xl border border-skyblue/10">
-                <div className="flex flex-col items-center">
-                  <input
-                    type="number"
-                    min="0"
-                    max="30"
-                    value={displayMinutes}
-                    disabled
-                    onChange={(e) =>
-                      updateDuration(Number(e.target.value), displaySeconds)
-                    }
-                    className="w-16 text-center bg-transparent text-2xl font-mono text-white/70 focus:outline-none appearance-none cursor-not-allowed"
-                  />
-                  <span className="text-xs text-skyblue/60">MIN</span>
-                </div>
-                <span className="text-2xl text-skyblue/50 pb-4">:</span>
-                <div className="flex flex-col items-center">
-                  <input
-                    type="number"
-                    min="0"
-                    max="59"
-                    value={displaySeconds.toString().padStart(2, "0")}
-                    disabled
-                    onChange={(e) =>
-                      updateDuration(displayMinutes, Number(e.target.value))
-                    }
-                    onBlur={() => updateDuration(displayMinutes, displaySeconds)}
-                    className="w-16 text-center bg-transparent text-2xl font-mono text-white/70 focus:outline-none appearance-none cursor-not-allowed"
-                  />
-                  <span className="text-xs text-skyblue/60">SEC</span>
-                </div>
+        {/* HUD-style Countdown Timer */}
+        <div className="flex justify-center mb-2">
+          <div
+            className={`relative px-8 py-4 rounded-2xl border-2 backdrop-blur-md transition-all duration-300 ${
+              isTimeCritical
+                ? "bg-red-900/40 border-red-500/70 shadow-[0_0_30px_rgba(184,12,12,0.6)] animate-pulse"
+                : isTimeRunningOut
+                ? "bg-orange-900/30 border-orange-500/60 shadow-[0_0_20px_rgba(251,146,60,0.4)]"
+                : "bg-navy/60 border-skyblue/50 shadow-[0_0_15px_rgba(153,207,255,0.3)]"
+            }`}
+          >
+            <div className="text-center">
+              <div className="text-xs text-skyblue/70 uppercase tracking-widest mb-1 font-semibold">
+                Time Remaining
               </div>
-            </div>
-
-            {/* Max Players Control (disabled) */}
-            <div className="flex flex-row items-center justify-between">
-              <span className="text-lg text-skyblue font-bold uppercase tracking-wider">
-                Max Players
-              </span>
-              <div className="flex items-center gap-3 bg-darkernavy/50 p-2 rounded-xl border border-skyblue/10 opacity-80">
-                <button
-                  onClick={() => handlePlayersChange(-1)}
-                  disabled
-                  className="w-10 h-10 flex items-center justify-center rounded-lg bg-skyblue/10 text-skyblue text-2xl font-bold cursor-not-allowed opacity-40"
-                >
-                  -
-                </button>
-                <span className="text-2xl font-mono text-white/80 w-8 text-center">
-                  {maxPlayers}
-                </span>
-                <button
-                  onClick={() => handlePlayersChange(1)}
-                  disabled
-                  className="w-10 h-10 flex items-center justify-center rounded-lg bg-skyblue/10 text-skyblue text-2xl font-bold cursor-not-allowed opacity-40"
-                >
-                  +
-                </button>
-              </div>
-            </div>
-
-            {/* End match early button */}
-            <div className="mt-2 flex justify-center">
-              <button
-                type="button"
-                onClick={endMatchEarly}
-                disabled={ending}
-                className={`px-6 py-3 rounded-2xl text-sm font-semibold border-2 text-white shadow-md transition-all ${
-                  ending
-                    ? "bg-red-700/70 border-red-950/60 cursor-not-allowed opacity-70"
-                    : "bg-red-700 border-red-950 hover:bg-red-600 hover:scale-105 cursor-pointer"
+              <div
+                className={`text-6xl font-mono font-bold transition-colors duration-300 ${
+                  isTimeCritical
+                    ? "text-red-300"
+                    : isTimeRunningOut
+                    ? "text-orange-300"
+                    : "text-gold"
                 }`}
+                style={{ textShadow: "0 0 20px currentColor" }}
               >
-                {ending ? "Ending match..." : "End Match Early"}
-              </button>
-            </div>
-          </div>
-
-          {/* Events list */}
-          <div className="bg-navy/80 backdrop-blur-md border-2 border-skyblue/30 rounded-3xl px-4 py-3 flex flex-col shadow-lg shadow-navy/50 overflow-hidden flex-1 min-h-[220px]">
-            <h2 className="text-xl text-white font-bold mb-2 border-b border-skyblue/20 pb-1 text-center">
-              Match Events
-            </h2>
-            <div className="flex-1 overflow-y-auto pr-1 space-y-1.5 text-xs">
-              {(!events || events.length === 0) && (
-                <p className="text-skyblue/60 text-center mt-4">
-                  No events yet.
-                </p>
-              )}
-              {events &&
-                events
-                  .slice()
-                  .sort(
-                    (a, b) =>
-                      new Date(a.timestamp).getTime() -
-                      new Date(b.timestamp).getTime(),
-                  )
-                  .map((event, idx) => (
-                    <div
-                      key={`${event.timestamp}-${event.planeId}-${idx}`}
-                      className="px-2 py-1 rounded-lg bg-darkernavy/60 border border-skyblue/10 text-skyblue/90"
-                    >
-                      {formatEvent(event)}
-                    </div>
-                  ))}
+                {String(displayMinutes).padStart(2, "0")}:
+                {String(displaySeconds).padStart(2, "0")}
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Right: live scores (keep kick button here) */}
-        <section className="bg-navy/80 backdrop-blur-md border-2 border-skyblue/30 rounded-3xl p-4 flex flex-col shadow-lg shadow-navy/50 overflow-hidden">
-          <h2 className="text-xl text-white font-bold mb-2 border-b border-skyblue/20 pb-2 text-center">
-            Live Scores
-          </h2>
-          <div className="flex-1 overflow-y-auto w-full pr-1 space-y-4">
-            {scoreboard.length === 0 && (
-              <p className="text-skyblue/60 text-sm text-center mt-4">
-                No players in match.
-              </p>
-            )}
-            {scoreboard.map((plane, index) => {
-              const iconSrc =
-                index % 2 === 0 ? "/plane-right.svg" : "/plane-white-right.svg";
-
-              return (
-                <div
-                  key={plane.planeId}
-                  className="rounded-2xl border border-skyblue/30 bg-gradient-to-r from-darkernavy/90 via-darkernavy/70 to-skyblue/20 px-5 py-4 text-base flex items-center gap-4 shadow-md shadow-navy/60 min-h-[100px]"
-                >
-                  <div className="flex-shrink-0">
-                    <Image
-                      src={iconSrc}
-                      alt="Plane icon"
-                      width={56}
-                      height={56}
-                      className="drop-shadow-[0_0_8px_rgba(251,191,36,0.7)]"
-                    />
+        <div className="w-full flex flex-col md:flex-col lg:flex-col gap-6 items-stretch relative z-10">
+          {/* Leaderboard and Match Events side by side on large screens */}
+          <div className="w-full flex flex-col md:flex-col lg:flex-row lg:gap-6">
+            {/* Leaderboard (left on large screens) */}
+            <section
+              className="bg-navy/80 backdrop-blur-md border-2 border-red-500/70 rounded-3xl p-5 flex flex-col shadow-xl overflow-hidden order-2 md:order-2 lg:order-1 lg:flex-1 lg:flex lg:flex-col"
+              style={{ animation: "battle-glow-red 1.5s ease-in-out infinite" }}
+            >
+              <div className="flex items-center justify-center gap-2 mb-3 border-b border-skyblue/20 pb-3">
+                <div className="w-2 h-2 rounded-full bg-yellow-400 animate-pulse shadow-[0_0_8px_rgba(250,204,21,0.8)]"></div>
+                <h2 className="text-xl text-white font-bold text-center uppercase tracking-wider">
+                  Leaderboard
+                </h2>
+                <div className="w-2 h-2 rounded-full bg-yellow-400 animate-pulse shadow-[0_0_8px_rgba(250,204,21,0.8)]"></div>
+              </div>
+              <div className="flex-1 overflow-y-auto pr-1 space-y-3 py-1 md:flex md:flex-row md:space-y-0 md:space-x-4 md:gap-4 md:overflow-x-auto md:overflow-y-hidden md:pb-2 md:justify-center md:items-stretch lg:flex lg:flex-row lg:space-y-0 lg:space-x-4 lg:gap-4 lg:overflow-x-auto lg:overflow-y-hidden lg:justify-center lg:items-stretch">
+                {scoreboard.length === 0 && (
+                  <div className="text-center mt-8 py-8">
+                    <p className="text-skyblue/70 text-sm font-medium mb-1">
+                      No players in match
+                    </p>
+                    <p className="text-skyblue/50 text-xs">
+                      Waiting for participants...
+                    </p>
                   </div>
-                  <div className="flex flex-col flex-1 gap-1">
-                    <div className="flex justify-between items-center gap-2">
-                      <span className="font-semibold text-skyblue text-base truncate">
-                        {index + 1}. {plane.playerName || "Unnamed Pilot"}
-                      </span>
-                      <div className="flex items-center gap-1.5">
-                        {plane.isDisqualified && (
-                          <span className="text-xs text-red-400 font-semibold px-2 py-0.5 rounded-full bg-red-900/40">
-                            DQ
+                )}
+                {scoreboard.slice(0, 3).map((plane, index) => {
+                  const rank = index + 1;
+                  const iconSrc =
+                    index % 2 === 0
+                      ? "/plane-right.svg"
+                      : "/plane-white-right.svg";
+                  const rankStyle = getRankStyle(rank);
+
+                  return (
+                    <div
+                      key={plane.planeId}
+                      className={`group rounded-2xl border-2 ${rankStyle} px-5 py-4 text-base flex flex-col gap-3 shadow-md transition-all duration-300 hover:shadow-lg hover:shadow-xl hover:brightness-110 md:flex-shrink-0 md:min-w-[200px] lg:flex-shrink-0 lg:min-w-[200px]`}
+                    >
+                      {/* Plane Icon - First */}
+                      <div className="flex justify-center">
+                        <div className="flex-shrink-0 relative">
+                          <Image
+                            src={iconSrc}
+                            alt="Plane icon"
+                            width={64}
+                            height={64}
+                            className={`drop-shadow-[0_0_10px_${
+                              rank === 1
+                                ? "rgba(203,163,94,0.8)"
+                                : rank === 2
+                                ? "rgba(153,207,255,0.8)"
+                                : rank === 3
+                                ? "rgba(251,146,60,0.8)"
+                                : "rgba(251,191,36,0.7)"
+                            }] transition-transform duration-300 group-hover:scale-110`}
+                          />
+                          {/* Rank Badge overlay */}
+                          <div className="absolute -top-2 -right-2 bg-navy/90 border-2 border-skyblue/50 rounded-full px-2 py-0.5">
+                            <div
+                              className={`text-sm font-bold font-mono ${
+                                rank === 1
+                                  ? "text-gold"
+                                  : rank === 2
+                                  ? "text-skyblue"
+                                  : rank === 3
+                                  ? "text-orange-400"
+                                  : "text-skyblue/70"
+                              }`}
+                            >
+                              #{rank}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Player Info - Below */}
+                      <div className="flex flex-col gap-2 min-w-0">
+                        {/* Player Name (Alpha/Bravo) */}
+                        <div className="text-center">
+                          <span
+                            className={`font-bold ${
+                              rank === 1
+                                ? "text-gold text-base"
+                                : rank === 2
+                                ? "text-skyblue text-base"
+                                : rank === 3
+                                ? "text-orange-300 text-base"
+                                : "text-skyblue text-sm"
+                            }`}
+                          >
+                            {plane.playerName || "Unnamed Pilot"}
                           </span>
+                          {plane.isDisqualified && (
+                            <span className="ml-2 text-xs text-red-400 font-bold px-2 py-1 rounded-full bg-red-900/50 border border-red-500/50 shadow-[0_0_6px_rgba(239,68,68,0.5)]">
+                              DQ
+                            </span>
+                          )}
+                        </div>
+                        {/* Plane ID */}
+                        <div className="text-center">
+                          <span className="text-xs text-skyblue/70 break-all font-mono">
+                            ID: {plane.planeId}
+                          </span>
+                        </div>
+                        {/* IP */}
+                        {plane.esp32Ip && (
+                          <div className="text-center">
+                            <span className="text-xs text-skyblue/60 font-mono break-all">
+                              IP: {plane.esp32Ip}
+                            </span>
+                          </div>
                         )}
+                        {/* Joined Status */}
+                        <div className="text-center mt-1">
+                          <span className="text-xs text-gold font-bold px-2.5 py-1 rounded-full bg-gold/20 border border-gold/40 shadow-[0_0_8px_rgba(203,163,94,0.4)] inline-block">
+                            IN MATCH
+                          </span>
+                        </div>
+                        {/* Stats */}
+                        <div className="flex justify-between items-center text-xs font-semibold mt-1">
+                          <div className="flex items-center gap-2">
+                            <span className="text-green-400">Hits: </span>
+                            <span className="text-white font-bold text-sm">
+                              {plane.hits ?? 0}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-red-400">Taken: </span>
+                            <span className="text-white font-bold text-sm">
+                              {plane.hitsTaken ?? 0}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Kick Button - At the bottom */}
+                      <button
+                        type="button"
+                        onClick={() => kickPlane(plane.planeId)}
+                        disabled={kickingId === plane.planeId}
+                        className={`w-full px-3 py-2 text-xs font-bold rounded-lg border transition-all duration-200 uppercase tracking-wider focus:outline-none focus:ring-2 focus:ring-red-500/50 ${
+                          kickingId === plane.planeId
+                            ? "border-red-500/40 bg-red-900/40 text-red-200/70 cursor-not-allowed"
+                            : "border-red-500/70 bg-red-900/70 text-red-100 hover:bg-red-700 hover:scale-105 hover:shadow-lg hover:shadow-red-900/50 active:scale-95 shadow-md"
+                        }`}
+                      >
+                        {kickingId === plane.planeId ? "Kicking..." : "Kick"}
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
+
+            {/* Match Events (right on large screens) */}
+            <div className="w-full order-1 md:order-3 lg:order-2 lg:flex-1 lg:flex lg:flex-col">
+              <div
+                className="bg-navy/80 backdrop-blur-md border-2 border-red-500/70 rounded-3xl px-4 py-3 flex flex-col shadow-xl overflow-hidden h-full lg:flex-1"
+                style={{
+                  animation: "battle-glow-red 1.5s ease-in-out infinite",
+                }}
+              >
+                <h2 className="text-lg text-white font-bold mb-3 border-b border-skyblue/20 pb-2 text-center uppercase tracking-wider">
+                  Match Events
+                </h2>
+                <div
+                  className="overflow-y-auto pr-2 space-y-2 text-xs match-events-scroll lg:flex-1"
+                  style={{
+                    scrollbarWidth: "thin",
+                    scrollbarColor: "rgba(153,207,255,0.3) rgba(11,29,57,0.5)",
+                    maxHeight: "calc(5 * 70px)", // Approximately 5 events visible (70px per event including spacing)
+                  }}
+                >
+                  {(!events || events.length === 0) && (
+                    <div className="text-center mt-8 py-8">
+                      <p className="text-skyblue/70 text-sm font-medium mb-1">
+                        No events yet
+                      </p>
+                      <p className="text-skyblue/50 text-xs">
+                        Match activity will appear here
+                      </p>
+                    </div>
+                  )}
+                  {events &&
+                    events
+                      .slice()
+                      .sort(
+                        (a, b) =>
+                          new Date(b.timestamp).getTime() -
+                          new Date(a.timestamp).getTime()
+                      )
+                      .slice(0, 50) // Limit to last 50 events
+                      .map((event, idx) => {
+                        const formatted = formatEvent(event);
+                        return (
+                          <div
+                            key={`${event.timestamp}-${event.planeId}-${idx}`}
+                            className={`px-3 py-2.5 rounded-lg border ${formatted.color} transition-all duration-200 hover:shadow-sm flex flex-col gap-1 min-h-[56px]`}
+                          >
+                            {/* Event Icon - Above */}
+                            <div className="text-center">
+                              <span className="text-base font-bold">
+                                {formatted.icon}
+                              </span>
+                            </div>
+                            {/* Event Details - Below */}
+                            <div className="flex flex-col gap-0.5 min-w-0">
+                              <div className="text-center">
+                                <span className="text-[10px] font-mono text-skyblue/70">
+                                  {formatted.time}
+                                </span>
+                              </div>
+                              <div className="text-xs font-medium leading-tight text-center break-words">
+                                {formatted.message
+                                  .split(" ")
+                                  .map((word, i, words) => {
+                                    // Highlight plane IDs
+                                    if (
+                                      word === formatted.planeId ||
+                                      word === formatted.targetId
+                                    ) {
+                                      return (
+                                        <span
+                                          key={i}
+                                          className="text-gold font-bold"
+                                        >
+                                          {word}
+                                          {i < words.length - 1 ? " " : ""}
+                                        </span>
+                                      );
+                                    }
+                                    // Regular word with space
+                                    return (
+                                      <span key={i}>
+                                        {word}
+                                        {i < words.length - 1 ? " " : ""}
+                                      </span>
+                                    );
+                                  })}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Active Fleet / Online planes (as a row on large screens) */}
+          <section
+            className="bg-navy/80 backdrop-blur-md border-2 border-red-500/70 rounded-3xl p-5 flex flex-col shadow-xl overflow-hidden order-3 md:order-4 lg:order-3"
+            style={{ animation: "battle-glow-red 1.5s ease-in-out infinite" }}
+          >
+            <div className="flex items-center justify-center gap-2 mb-3 border-b border-skyblue/20 pb-3">
+              <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse shadow-[0_0_8px_rgba(74,222,128,0.8)]"></div>
+              <h2 className="text-xl text-white font-bold text-center uppercase tracking-wider">
+                Active Fleet
+              </h2>
+              <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse shadow-[0_0_8px_rgba(74,222,128,0.8)]"></div>
+            </div>
+            <div className="flex-1 overflow-y-auto pr-1 space-y-3 md:grid md:grid-cols-3 md:gap-3 md:space-y-0 md:overflow-y-auto lg:grid lg:grid-cols-3 lg:gap-4 lg:space-y-0">
+              {onlinePlanes.length === 0 && (
+                <div className="text-center mt-8 py-8 md:col-span-3 lg:col-span-3">
+                  <p className="text-skyblue/70 text-sm font-medium mb-1">
+                    No planes online
+                  </p>
+                  <p className="text-skyblue/50 text-xs">
+                    Waiting for connections...
+                  </p>
+                </div>
+              )}
+              {onlinePlanes.map((plane, index) => {
+                const iconSrc =
+                  index % 2 === 0
+                    ? "/plane-right.svg"
+                    : "/plane-white-right.svg";
+
+                return (
+                  <div
+                    key={plane.planeId}
+                    className="group rounded-2xl border border-skyblue/30 bg-gradient-to-r from-darkernavy/90 via-darkernavy/70 to-skyblue/20 px-5 py-4 text-base flex flex-col gap-3 shadow-md shadow-navy/60 transition-all duration-300 hover:border-skyblue/50 hover:shadow-lg hover:shadow-skyblue/20"
+                  >
+                    {/* Plane Icon - Above */}
+                    <div className="flex justify-center">
+                      <div className="relative">
+                        <Image
+                          src={iconSrc}
+                          alt="Plane icon"
+                          width={64}
+                          height={64}
+                          className="drop-shadow-[0_0_10px_rgba(153,207,255,0.8)] transition-transform duration-300 group-hover:scale-110"
+                        />
+                        <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full border-2 border-navy shadow-[0_0_6px_rgba(74,222,128,1)] animate-pulse"></div>
                       </div>
                     </div>
-                    <span className="text-sm text-skyblue/70 break-all">
-                      ID: {plane.planeId}
-                    </span>
-                    <div className="flex justify-between text-sm text-skyblue/80 mt-1">
-                      <span>Hits: {plane.hits ?? 0}</span>
-                      <span>Hits Taken: {plane.hitsTaken ?? 0}</span>
+
+                    {/* Player Info - Below */}
+                    <div className="flex flex-col gap-2 min-w-0">
+                      {/* Player Name (Alpha/Bravo) */}
+                      <div className="text-center">
+                        <span className="font-bold text-skyblue text-base">
+                          {plane.playerName || "Unlinked Plane"}
+                        </span>
+                      </div>
+                      {/* Plane ID */}
+                      <div className="text-center">
+                        <span className="text-xs text-skyblue/70 break-all font-mono">
+                          ID: {plane.planeId}
+                        </span>
+                      </div>
+                      {/* IP */}
+                      {plane.esp32Ip && (
+                        <div className="text-center">
+                          <span className="text-xs text-skyblue/60 font-mono break-all">
+                            IP: {plane.esp32Ip}
+                          </span>
+                        </div>
+                      )}
+                      {/* Joined Status */}
+                      {plane.isJoined && (
+                        <div className="text-center mt-1">
+                          <span className="text-xs text-gold font-bold px-2.5 py-1 rounded-full bg-gold/20 border border-gold/40 shadow-[0_0_8px_rgba(203,163,94,0.4)] inline-block">
+                            IN MATCH
+                          </span>
+                        </div>
+                      )}
                     </div>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => kickPlane(plane.planeId)}
-                    disabled={kickingId === plane.planeId}
-                    className={`ml-2 px-3 py-2 text-sm font-semibold rounded-xl border transition-all ${
-                      kickingId === plane.planeId
-                        ? "border-red-500/40 bg-red-900/40 text-red-200/70 cursor-not-allowed"
-                        : "border-red-500/70 bg-red-900/70 text-red-100 hover:bg-red-700 hover:scale-105 shadow-md"
-                    }`}
-                  >
-                    {kickingId === plane.planeId ? "Kicking..." : "Kick"}
-                  </button>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
+          </section>
+        </div>
+
+        {/* End Match Button (at bottom on medium and large screens) */}
+        <div className="w-full order-4 md:order-5 lg:order-4">
+          <div
+            className="bg-navy/80 backdrop-blur-md border-2 border-red-500/70 rounded-3xl p-5 w-full flex justify-center shadow-xl"
+            style={{ animation: "battle-glow-red 1.5s ease-in-out infinite" }}
+          >
+            <button
+              type="button"
+              onClick={endMatchEarly}
+              disabled={ending}
+              className={`px-8 py-3 rounded-xl text-base font-bold border-2 text-white shadow-lg transition-all duration-200 uppercase tracking-wider focus:outline-none focus:ring-4 focus:ring-red-500/50 focus:ring-offset-2 focus:ring-offset-navy ${
+                ending
+                  ? "bg-maroon/70 border-maroon/60 cursor-not-allowed opacity-70"
+                  : "bg-gradient-to-r from-red-700 to-red-800 border-maroon/80 hover:from-red-600 hover:to-red-700 hover:scale-105 hover:shadow-xl hover:shadow-red-900/50 active:scale-95 cursor-pointer"
+              }`}
+            >
+              {ending ? "Ending Match..." : "End Match"}
+            </button>
           </div>
-        </section>
+        </div>
       </div>
     </main>
   );
