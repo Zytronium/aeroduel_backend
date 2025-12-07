@@ -54,10 +54,18 @@ export async function POST(req: Request) {
 
   // We could double-check that match params like duration & max players are inside their limits, but that would be redundant. If you figured out a way around the restrictions, then you win. After all, we built Aeroduel to be hacked on.
 
+
+    // Schedule automatic end of match after its duration
+    const endsAt = scheduleMatchEndTimer(
+        currentMatch!.matchId,
+        currentMatch!.duration,
+    );
+
   currentMatch = updateCurrentMatch(() => ({
     matchId: currentMatch!.matchId,
     status: "active",
     createdAt: currentMatch!.createdAt,
+    endsAt,
     matchType: currentMatch!.matchType,
     duration: currentMatch!.duration,
     matchPlanes: currentMatch!.matchPlanes,
@@ -66,12 +74,6 @@ export async function POST(req: Request) {
     wsUrl: currentMatch!.wsUrl,
     events: currentMatch!.events,
   }));
-
-  // Schedule automatic end of match after its duration
-  const endsAt = scheduleMatchEndTimer(
-    currentMatch!.matchId,
-    currentMatch!.duration,
-  );
 
   // Notify all connected mobiles about the new match status/scores
   broadcastMatchUpdate();

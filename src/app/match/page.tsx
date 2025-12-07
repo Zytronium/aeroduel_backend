@@ -73,13 +73,13 @@ export default function MatchPage() {
         setMaxPlayers(match.maxPlayers);
         setEvents(match.events ?? []);
 
-        // Calculate time remaining based on match status and createdAt
-        if (match.status === "active" && match.createdAt) {
-          const elapsed = Math.floor(
-            (Date.now() - new Date(match.createdAt).getTime()) / 1000
-          );
-          const remaining = Math.max(0, match.duration - elapsed);
-          setTimeRemaining(remaining);
+          // Calculate time remaining based on match status and endsAt
+          if (match.status === "active" && match.endsAt) {
+              const remaining = Math.max(
+                  0,
+                  Math.floor((new Date(match.endsAt).getTime() - Date.now()) / 1000)
+              );
+              setTimeRemaining(remaining);
         } else {
           setTimeRemaining(match.duration);
         }

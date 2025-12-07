@@ -2,6 +2,7 @@ export interface MatchState {
   matchId: string;
   status: "waiting" | "active" | "ended";
   createdAt: Date;
+  endsAt?: Date;
   matchType: "timed"; // | "scored" | "lives"; // (Stretch goal match types)
   duration: number;      // match duration in seconds
   matchPlanes: string[]; // planeIds of planes that have joined the match
