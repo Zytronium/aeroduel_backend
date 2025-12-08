@@ -6,6 +6,7 @@ import {
   setPlaneAuthToken
 } from "@/lib/match-state";
 import { generateAuthToken } from "@/lib/utils";
+import { broadcastPlanePowerOn } from "@/lib/websocket";
 
 export async function POST(req: Request) {
     let data;
@@ -54,6 +55,10 @@ export async function POST(req: Request) {
 
   // Associate this plane's auth token with that match
   setPlaneAuthToken(getSessionId(), planeId, authToken);
+
+  // Notify mobile clients in the current match that this plane has powered on.
+  // Use provided userId when available; fall back to an empty string if not present.
+  broadcastPlanePowerOn(planeId, userId ?? "");
 
   return NextResponse.json({
     success: true,

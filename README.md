@@ -52,6 +52,8 @@ live scores, and more.
 * Bonjour (or an equivalent mDNS responder) if running on **Windows**
 * Avahi (or an equivalent mDNS responder) if running on **Linux** (if not already installed by default)
 * WiFi or mobile hotspot  
+  * Note: Depending on your hardware, you may need a 2.4G WiFi network instead of 5G.  
+
 <small>*: required only if building from source</small>
 
 ### mDNS Responders for Windows

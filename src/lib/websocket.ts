@@ -121,10 +121,18 @@ interface PlaneRemoved {
   };
 }
 
+interface PlanePowerOn {
+    type: "plane:poweron";
+    data: {
+        planeId: string;
+        userId: string;
+    };
+}
+
 type OutgoingMessage =
     | MatchUpdate |  PlaneHit  |   MatchEnd    | MatchCreated
     | SystemError | PlaneFlash | MatchStateMsg | PlaneRemoved
-    | SystemAcknowledge;
+    | SystemAcknowledge | PlanePowerOn;
 
 // WebSocket port: default to PORT + 1 so we don't collide with HTTP server
 export const WS_PORT = Number(
@@ -519,6 +527,26 @@ export function broadcastMatchStateToPlanes(
  * Notify a plane AND the specific mobile client associated with that plane
  * that it has been kicked or disqualified.
  */
+export function broadcastPlanePowerOn(planeId: string, userId: string): void {
+    ensureWebSocketServer();
+
+    const match = getCurrentMatch();
+    if (!match) return;
+
+    const payload: OutgoingMessage = {
+        type: "plane:poweron",
+        data: {
+            planeId,
+            userId,
+        },
+    };
+
+    broadcast(
+        (c) => c.role === "mobile" && c.matchId === match.matchId,
+        payload,
+    );
+}
+
 export function notifyPlaneKickedOrDisqualified(
   planeId: string,
   kind: "plane:kicked" | "plane:disqualified",
