@@ -410,6 +410,42 @@ Client recommendations:
     - Avoid automatically switching the user's active match without explicit consent.
 ---
 
+### 4.5 `plane:poweron`
+
+**Direction:** Server → Mobile  
+**Sent when:** A physical plane (ESP32) registers with the server (e.g., via the HTTP register endpoint) and is marked online for the current match/session.
+
+**Payload:**
+```json
+{
+  "type": "plane:poweron",
+  "data": {
+    "planeId": "uuid-of-plane",
+    "userId": "uuid-of-user"
+  }
+}
+```
+Fields:
+
+- `planeId`: The unique ID of the plane that just powered on / registered.
+- `userId`: The user ID associated with that plane, if any. May be an empty string or null if unknown.
+
+Semantics:
+
+- This is an informational event delivered to mobile clients that are connected to the same match.
+- Use cases:
+    - Mobile UIs can show a "Plane X is online" indicator in the lobby.
+    - If a user is expecting their plane to come online, the app can surface a notification, enable the "Join" button, or refresh the plane list.
+- It does not imply the plane has joined the match; it only indicates the plane's device is reachable and registered with the server.
+- A `match:update` typically follows (or should be requested) to reflect any change in the match/plane lists.
+
+Client recommendations:
+
+- Show a non‑intrusive indicator that the plane is online (e.g., green dot).
+- Do not automatically join the user into a match solely based on this message; require explicit user action.
+- If `userId` matches the logged-in user, consider focusing UI on that plane (e.g., highlight it or enable join controls).
+---
+
 ## 5. Control Events for Planes (Server → Arduino)
 
 Planes are primarily controlled via these messages. They do not send their own
