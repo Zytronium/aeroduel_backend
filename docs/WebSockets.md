@@ -588,7 +588,10 @@ When a mobile client's WebSocket closes or errors:
 
 - `match:update` – Live match status and scores.
 - `plane:hit` – Individual hit event (attacker, target, timestamp).
+- `match:created` – A new match is available to join.
 - `match:end` – Final winners and scores.
+- `plane:kicked` – Plane removed from match/lobby; includes reason.
+- `plane:disqualified` – Plane disqualified during an active match; includes reason.
 
 ---
 
@@ -602,4 +605,4 @@ When a mobile client's WebSocket closes or errors:
 ---
 
 **Documentation Created**: December 5, 2025  
-**Last Updated**: December 7, 2025
+**Last Updated**: December 8, 2025
