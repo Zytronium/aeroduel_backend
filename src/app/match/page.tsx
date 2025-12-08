@@ -116,22 +116,28 @@ export default function MatchPage() {
         const data: Plane[] = await res.json();
         if (!cancelled) {
           setPlanes(data);
+            // Check if timer ended and handle match end
+            if (timeRemaining === 0) {
+                const winner = scoreboard[0];
+                alert(`Match ended! ${winner ? `${winner.playerName || 'Unnamed Pilot'} (${winner.planeId}) won!` : 'No winner.'}`);
+                router.push('/');
+            }
         }
       } catch (err) {
-        console.error("Failed to fetch planes", err);
+          console.error("Failed to fetch planes", err);
       }
     }
 
-    fetchPlanes();
-    const intervalId = window.setInterval(fetchPlanes, 2000);
+      fetchPlanes();
+      const intervalId = window.setInterval(fetchPlanes, 2000);
 
-    return () => {
-      cancelled = true;
-      window.clearInterval(intervalId);
-    };
-  }, []);
+      return () => {
+          cancelled = true;
+          window.clearInterval(intervalId);
+      };
+  }, [timeRemaining, scoreboard, router]);
 
-  // Trigger fade-in animation on mount
+    // Trigger fade-in animation on mount
   useEffect(() => {
     setIsLoaded(true);
   }, []);

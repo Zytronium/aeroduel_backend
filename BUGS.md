@@ -19,27 +19,6 @@ The bug tracker for the Aeroduel Server.
 
 ---
 
-### App Does Not Return to Main Page After Match Timer Ends
-
-#### Possible Causes
-- I forgot to implement this.
-
-#### Possible Fixes and Workarounds
-- Add like 3 lines of code to send the user to the root page when match timer ends in match-timer.ts
-
----
-
-### Plane Icons in Background Stretch as Page Gets Taller Due to Increased Event Logs in the Ongoing Match Page.
-
-#### Possible Causes
-- Background CSS issues
-
-#### Possible Fixes and Workarounds
-- Add a scrollbar to match events bar
-- Add a max-height to background plane images
-
----
-
 ### Plane icons in UI are based on position in list rather than ID
 
 #### Cause
