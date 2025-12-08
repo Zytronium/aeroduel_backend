@@ -118,8 +118,7 @@ export default function MatchPage() {
           setPlanes(data);
             // Check if timer ended and handle match end
             if (timeRemaining === 0) {
-                const winner = scoreboard[0];
-                alert(`Match ended! ${winner ? `${winner.playerName || 'Unnamed Pilot'} (${winner.planeId}) won!` : 'No winner.'}`);
+                showWinnerAlert();
                 router.push('/');
             }
         }
@@ -172,7 +171,8 @@ export default function MatchPage() {
       } else if (!response.ok) {
         alert("An unknown error occurred while ending the match.");
       } else if (data.success === true || data.success === "true") {
-        router.push("/");
+          showWinnerAlert();
+          router.push("/");
       }
 
       console.log("End match response:", JSON.stringify(data));
@@ -266,7 +266,12 @@ export default function MatchPage() {
     }
   };
 
-  const formatEvent = (
+    const showWinnerAlert = () => {
+        const winner = scoreboard[0];
+        alert(`Match ended! ${winner ? `${winner.playerName || 'Unnamed Pilot'} (${winner.planeId}) won!` : 'No winner.'}`);
+    };
+
+    const formatEvent = (
     event: Event
   ): {
     time: string;
