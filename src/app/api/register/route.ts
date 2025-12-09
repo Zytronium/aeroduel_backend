@@ -3,7 +3,8 @@ import {
   getCurrentMatch,
   getSessionId,
   registerPlane,
-  setPlaneAuthToken
+  setPlaneAuthToken,
+  getNextIcon
 } from "@/lib/match-state";
 import { generateAuthToken } from "@/lib/utils";
 import { broadcastPlanePowerOn } from "@/lib/websocket";
@@ -39,6 +40,7 @@ export async function POST(req: Request) {
     isDisqualified: false,
     isJoined: false,
     isOnline: true,
+    icon: getNextIcon(), // choose "WHITE" or "BLACK" based on previously registered plane
     playerName: "",
     planeId,
     esp32Ip, // todo: we can assume this from requester's IP address if not provided

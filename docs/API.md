@@ -495,6 +495,7 @@ interface Plane {
   esp32Ip?: string;
   planeId: string;
   userId: string;
+  icon: "BLACK" | "WHITE";
   playerName?: string;
   registeredAt: Date;
 

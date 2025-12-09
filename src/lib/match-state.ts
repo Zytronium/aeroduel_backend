@@ -11,9 +11,22 @@ const userAuthTokens = new Map<string, string>();
 // Track disconnect-grace timers per plane
 const planeDisconnectTimers = new Map<string, NodeJS.Timeout>();
 
+// Keep track of the icon color that was assigned to the previously registered plane.
+// It will be "BLACK" or "WHITE", or null if no plane has been registered yet in this server run.
+let lastRegisteredIcon: "BLACK" | "WHITE" | null = null;
+
 // Return current session ID
 export function getSessionId() {
   return sessionId;
+}
+
+// Return the next icon to assign. If the previous icon was "BLACK", return "WHITE".
+// Otherwise return "BLACK". Default to "BLACK" if there was no previous icon.
+export function getNextIcon(): "BLACK" | "WHITE" {
+  if (lastRegisteredIcon === "BLACK") {
+    return "WHITE";
+  }
+  return "BLACK";
 }
 
 // Regenerate Session ID
@@ -153,6 +166,7 @@ export function registerPlane(planeData: Plane): boolean {
     esp32Ip: planeData.esp32Ip,
     playerName: planeData.playerName,
     registeredAt: planeData.registeredAt ?? new Date(),
+    icon: planeData.icon ?? getNextIcon(),
 
     // Match info
     hits: planeData.hits ?? 0,
@@ -172,6 +186,10 @@ export function registerPlane(planeData: Plane): boolean {
   } else {
     planes.push(normalized);
   }
+
+  // Update the stored lastRegisteredIcon to reflect this registration.
+  // Use the icon from the normalized object to ensure we store what was actually assigned.
+  lastRegisteredIcon = normalized.icon === "BLACK" ? "BLACK" : "WHITE";
 
   return true;
 }

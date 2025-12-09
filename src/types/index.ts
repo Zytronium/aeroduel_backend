@@ -18,6 +18,7 @@ export interface Plane {
   planeId: string;
   userId: string;
   playerName?: string;
+  icon: "BLACK" | "WHITE";
   registeredAt: Date;
 
   /* Match info */
