@@ -17,7 +17,10 @@
 The Aeroduel Server API handles match creation, plane registration, game state management, and real-time communication between ESP32s and mobile apps.
 
 **Base URL:** `http://aeroduel.local:45045`  
-**WebSocket URL:** `ws://aeroduel.local:45045`
+**WebSocket URL:** `ws://aeroduel.local:45046`
+
+> **Note**: The WebSocket port is by default whatever the HTTP port is + 1. This
+means if you change the default HTTP port to 3000, the WebSocket port will be 3001. 
 
 ---
 
@@ -72,14 +75,12 @@ using mDNS hostname (fallback to local IP)
   "success": true,
   "match": {
     "matchId": "a1b2c3d4e5f6...",
-    "gamePin": "123456",
-    "qrCodeData": "aeroduel://join?host=aeroduel.local&port=45045&pin=123456",
     "status": "waiting",
     "matchType": "timed",
     "duration": 420,
     "maxPlayers": 2,
     "serverUrl": "http://aeroduel.local:45045",
-    "wsUrl": "ws://aeroduel.local:45045",
+    "wsUrl": "ws://aeroduel.local:45046",
     "matchPlanes": [],
     "localIp": "192.168.1.5"
   }
@@ -127,7 +128,6 @@ using mDNS hostname (fallback to local IP)
   "error": "A match is already in progress",
   "existingMatch": {
     "matchId": "...",
-    "gamePin": "123456",
     "status": "waiting"
   }
 }
@@ -239,7 +239,40 @@ token.
 **Success Response (200):**
 ```json
 {
-  "success": true
+  "success": true,
+  "match": {
+    "matchId": "a1b2c3d4e5f6...",
+    "status": "ended",
+    "createdAt": "2025-11-21T12:00:00Z",
+    "matchType": "timed",
+    "duration": 420,
+    "matchPlanes": [
+      "plane-id-1",
+      "plane-id-2"
+    ],
+    ...
+  },
+  "results": {
+    "winners": ["plane-uuid-2"],
+    "scores": [
+      {
+        "planeId": "plane-uuid-1",
+        "playerName": "Foxtrot-4",
+        "hits": 2,
+        "hitsTaken": 4,
+        "isDisqualified": false,
+        "isWinner": false
+      },
+      {
+        "planeId": "plane-uuid-2",
+        "playerName": "Delta-7",
+        "hits": 4,
+        "hitsTaken": 2,
+        "isDisqualified": false,
+        "isWinner": true
+      }
+    ]
+  }
 }
 ```
 
@@ -365,7 +398,7 @@ joined plane IDs, and more. Useful for debugging.
   ],
   "maxPlayers": 2,
   "serverUrl": "http://aeroduel.local:45045",
-  "wsUrl": "ws://aeroduel.local:45045",
+  "wsUrl": "ws://aeroduel.local:45046",
   "events": [
     {
       "type": "join",
@@ -545,7 +578,7 @@ Arduino-only endpoints: Only the ESP32s can make requests to this endpoint, and 
   - Server-only endpoint
   - Only one match allowed at a time (returns 409 if match already exists)
   - INPUT: `{ serverToken, duration?, maxPlayers? }`
-  - OUTPUT: `{ success, match }` (`match` includes `matchId`, `gamePin`, URLs, QR payload, etc.)
+  - OUTPUT: `{ success, match }` (`match` includes `matchId`, URLs, local IP, etc.)
 
 - `POST /api/register` – Registers that a plane is online, but doesn't associate it with the current match yet
   - Called by the plane's ESP32 once it is on Wi‑Fi
@@ -574,13 +607,13 @@ Arduino-only endpoints: Only the ESP32s can make requests to this endpoint, and 
   - INPUT: `{ serverToken }`
   - OUTPUT: `{ success, endsAt }`
 
-- `POST /api/start-match` - Ends an Aeroduel match
+- `POST /api/end-match` - Ends an Aeroduel match
   - Server-only endpoint
   - Called by the server app when the match timer expires
   - Updates the match in memory to be ended and sends WebSocket updates to ESP32s and mobile apps
   - Only the sever's front-end can make requests to this endpoint, and this is enforced
   - INPUT: `{ serverToken }`
-  - OUTPUT: `{ success }`
+  - OUTPUT: `{ success, match, results }`
 
 - `POST /api/kick` - Kicks or disqualifies a plane from the match
   - Server-only endpoint
@@ -620,7 +653,6 @@ Arduino-only endpoints: Only the ESP32s can make requests to this endpoint, and 
 - `POST /api/sign-in` - registers that a user is online and issues a mobile-only auth token
 - `POST /api/sign-out` - registers that a user is offline and revokes the mobile-only auth token (mobile-only endpoint)
 - `POST /api/blacklist` - blacklist a userId or planeId from joining matches until the server restarts (server-only endpoint)
-- `DELETE /api/end-match` - Cancel/end match
 - `GET /api/match/:id/events` - Get match events such as hits
 
 ---
@@ -634,4 +666,4 @@ Arduino-only endpoints: Only the ESP32s can make requests to this endpoint, and 
 ---
 
 **Documentation Created**: November 21, 2025  
-**Last Updated**: December 5, 2025
+**Last Updated**: December 9, 2025
