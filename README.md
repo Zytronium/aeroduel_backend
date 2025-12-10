@@ -98,6 +98,11 @@ with a script.
 ```bash
 npm run build
 ```
+> *Note: If `npm run build` fails on Windows, try `npm run build2`.
+> If you run into the following error, turn on Developer Mode in Windows settings.  
+> ```ERROR: Cannot create symbolic link : A required privilege is not held by the client.```  
+(Settings → Privacy & Security → For Developers → Developer Mode → On)
+
 The output will be located in the `dist` directory.  
 > *Note: On Windows and MacOS, an installer will be built. You will have to run this to 
 install the real application. The Linux version does not require this step.*
